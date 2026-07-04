@@ -1,0 +1,485 @@
+import pandas as pd
+import streamlit as st
+
+
+def generate_next_id(df: pd.DataFrame, id_column: str, prefix: str) -> str:
+    """
+    Verilen ID kolonuna göre sıradaki ID değerini üretir.
+
+    Example:
+    C001, C002, C003...
+    S001, S002, S003...
+    """
+    if df.empty or id_column not in df.columns:
+        return f"{prefix}001"
+
+    numeric_values = (
+        df[id_column]
+        .astype(str)
+        .str.replace(prefix, "", regex=False)
+    )
+
+    numeric_values = pd.to_numeric(numeric_values, errors="coerce")
+
+    if numeric_values.dropna().empty:
+        return f"{prefix}001"
+
+    last_number = int(numeric_values.max())
+
+    return f"{prefix}{last_number + 1:03d}"
+
+
+def calculate_hashtag_count(hashtags: str) -> int:
+    """
+    Hashtag metninden kaç adet hashtag/etiket olduğunu hesaplar.
+    Virgül ve boşluk ayrımlarını destekler.
+    """
+    clean_hashtags = hashtags.strip()
+
+    return len(
+        [
+            tag
+            for tag in clean_hashtags.replace(",", " ").split()
+            if tag.strip()
+        ]
+    )
+
+
+def get_latest_snapshot(
+    snapshots_df: pd.DataFrame,
+    selected_cover_id: str,
+):
+    """
+    Seçili cover için en son metric snapshot kaydını döndürür.
+    Eğer snapshot yoksa None döndürür.
+    """
+    selected_snapshots_df = snapshots_df[
+        snapshots_df["cover_id"] == selected_cover_id
+    ].copy()
+
+    if selected_snapshots_df.empty:
+        return None
+
+    selected_snapshots_df["snapshot_date"] = pd.to_datetime(
+        selected_snapshots_df["snapshot_date"],
+        errors="coerce",
+    )
+
+    selected_snapshots_df = selected_snapshots_df.sort_values(
+        by=["snapshot_date", "snapshot_id"]
+    )
+
+    return selected_snapshots_df.iloc[-1]
+
+
+def render_latest_snapshot_preview(latest_snapshot):
+    """
+    Sidebar içinde seçili cover'ın son snapshot bilgisini gösterir.
+    """
+    if latest_snapshot is None:
+        return
+
+    latest_snapshot_date = latest_snapshot["snapshot_date"]
+
+    if pd.notna(latest_snapshot_date):
+        latest_snapshot_date_text = latest_snapshot_date.date()
+    else:
+        latest_snapshot_date_text = "Unknown"
+
+    st.sidebar.caption("Latest snapshot for selected cover:")
+    st.sidebar.write(f"Date: **{latest_snapshot_date_text}**")
+    st.sidebar.write(f"Views: **{latest_snapshot['views']}**")
+    st.sidebar.write(f"Likes: **{latest_snapshot['likes']}**")
+    st.sidebar.write(f"Comments: **{latest_snapshot['comments']}**")
+    st.sidebar.write(f"Saves: **{latest_snapshot['saves']}**")
+    st.sidebar.write(f"Shares: **{latest_snapshot['shares']}**")
+
+
+def validate_new_snapshot_values(
+    latest_snapshot,
+    snapshot_views: int,
+    snapshot_likes: int,
+    snapshot_comments: int,
+    snapshot_saves: int,
+    snapshot_shares: int,
+) -> bool:
+    """
+    Yeni snapshot değerleri son snapshot değerlerinden düşük olamaz.
+
+    True dönerse değerler geçerlidir.
+    False dönerse en az bir değer hatalıdır.
+    """
+    if latest_snapshot is None:
+        return True
+
+    has_invalid_snapshot = False
+
+    if snapshot_views < latest_snapshot["views"]:
+        st.sidebar.error("New views value cannot be lower than the latest snapshot.")
+        has_invalid_snapshot = True
+
+    if snapshot_likes < latest_snapshot["likes"]:
+        st.sidebar.error("New likes value cannot be lower than the latest snapshot.")
+        has_invalid_snapshot = True
+
+    if snapshot_comments < latest_snapshot["comments"]:
+        st.sidebar.error("New comments value cannot be lower than the latest snapshot.")
+        has_invalid_snapshot = True
+
+    if snapshot_saves < latest_snapshot["saves"]:
+        st.sidebar.error("New saves value cannot be lower than the latest snapshot.")
+        has_invalid_snapshot = True
+
+    if snapshot_shares < latest_snapshot["shares"]:
+        st.sidebar.error("New shares value cannot be lower than the latest snapshot.")
+        has_invalid_snapshot = True
+
+    return not has_invalid_snapshot
+
+
+def render_add_new_cover_form(data_path: str, snapshots_path: str):
+    """
+    Sidebar içindeki Add New Cover formunu render eder.
+
+    Bu form iki dosyaya kayıt yapar:
+    - covers.csv
+    - metrics_snapshots.csv
+    """
+    st.sidebar.header("Add New Cover")
+
+    with st.sidebar.form("add_cover_form", clear_on_submit=True):
+        title = st.text_input("Cover Title")
+        artist = st.text_input("Original Artist")
+
+        platform = st.selectbox("Platform", ["Instagram", "YouTube", "TikTok"])
+
+        content_type = st.selectbox(
+            "Content Type",
+            ["Reels", "Shorts", "TikTok Video", "Post"],
+        )
+
+        genre = st.text_input("Genre", placeholder="Example: Rock Acoustic")
+
+        post_date = st.date_input("Post Date")
+
+        views = st.number_input("Views", min_value=1, step=100)
+        likes = st.number_input("Likes", min_value=0, step=10)
+        comments = st.number_input("Comments", min_value=0, step=1)
+        saves = st.number_input("Saves", min_value=0, step=1)
+        shares = st.number_input("Shares", min_value=0, step=1)
+
+        duration_sec = st.number_input("Duration Seconds", min_value=1, step=1)
+
+        hook_type = st.selectbox(
+            "Hook Type",
+            [
+                "direct chorus",
+                "slow intro",
+                "instrumental intro",
+                "vocal intro",
+                "other",
+            ],
+        )
+
+        vocal_style = st.selectbox(
+            "Vocal Style",
+            ["soft", "powerful", "emotional", "mixed", "other"],
+        )
+
+        language = st.selectbox("Language", ["Turkish", "English", "Other"])
+        post_time = st.time_input("Post Time")
+
+        caption_text = st.text_area(
+            "Caption Text",
+            placeholder="Paste or write the caption here",
+        )
+
+        hashtags = st.text_input(
+            "Hashtags",
+            placeholder="#cover #music #acoustic",
+        )
+
+        audio_quality_score = st.slider(
+            "Audio Quality Score",
+            min_value=1,
+            max_value=5,
+            value=3,
+        )
+
+        thumbnail_score = st.slider(
+            "Thumbnail Score",
+            min_value=1,
+            max_value=5,
+            value=3,
+        )
+
+        recording_type = st.selectbox(
+            "Recording Type",
+            ["home", "studio", "live", "other"],
+        )
+
+        arrangement_type = st.selectbox(
+            "Arrangement Type",
+            ["acoustic", "piano", "full band", "guitar vocal", "other"],
+        )
+
+        song_mood = st.selectbox(
+            "Song Mood",
+            ["emotional", "energetic", "melancholic", "romantic", "dark", "other"],
+        )
+
+        content_origin = st.selectbox(
+            "Content Origin",
+            ["cover", "original"],
+        )
+
+        submitted = st.form_submit_button("Add Cover")
+
+        if submitted:
+            if title.strip() == "" or artist.strip() == "" or genre.strip() == "":
+                st.warning("Please fill title, artist and genre fields.")
+                return
+
+            covers_df = pd.read_csv(data_path)
+            snapshots_df = pd.read_csv(snapshots_path)
+
+            new_cover_id = generate_next_id(covers_df, "cover_id", "C")
+            new_snapshot_id = generate_next_id(snapshots_df, "snapshot_id", "S")
+
+            clean_hashtags = hashtags.strip()
+            hashtag_count = calculate_hashtag_count(clean_hashtags)
+
+            new_cover = {
+                "cover_id": new_cover_id,
+                "title": title,
+                "artist": artist,
+                "platform": platform,
+                "content_type": content_type,
+                "genre": genre,
+                "post_date": str(post_date),
+                "duration_sec": duration_sec,
+                "hook_type": hook_type,
+                "vocal_style": vocal_style,
+                "language": language,
+                "post_time": post_time.strftime("%H:%M"),
+                "caption_length": len(caption_text),
+                "hashtags": clean_hashtags,
+                "hashtag_count": hashtag_count,
+                "audio_quality_score": audio_quality_score,
+                "thumbnail_score": thumbnail_score,
+                "recording_type": recording_type,
+                "arrangement_type": arrangement_type,
+                "song_mood": song_mood,
+                "content_origin": content_origin,
+            }
+
+            new_snapshot = {
+                "snapshot_id": new_snapshot_id,
+                "cover_id": new_cover_id,
+                "snapshot_date": pd.Timestamp.today().date().isoformat(),
+                "views": views,
+                "likes": likes,
+                "comments": comments,
+                "saves": saves,
+                "shares": shares,
+            }
+
+            updated_covers_df = pd.concat(
+                [covers_df, pd.DataFrame([new_cover])],
+                ignore_index=True,
+            )
+
+            updated_snapshots_df = pd.concat(
+                [snapshots_df, pd.DataFrame([new_snapshot])],
+                ignore_index=True,
+            )
+
+            updated_covers_df.to_csv(
+                data_path,
+                index=False,
+                encoding="utf-8-sig",
+            )
+
+            updated_snapshots_df.to_csv(
+                snapshots_path,
+                index=False,
+                encoding="utf-8-sig",
+            )
+
+            st.success("Cover and first metric snapshot added successfully!")
+
+            st.rerun()
+
+
+def render_add_metric_snapshot_form(data_path: str, snapshots_path: str):
+    """
+    Sidebar içindeki Add Metric Snapshot formunu render eder.
+
+    Bu form mevcut bir cover için yeni metric snapshot kaydı ekler.
+    """
+    st.sidebar.divider()
+    st.sidebar.header("Add Metric Snapshot")
+
+    covers_for_snapshot = pd.read_csv(data_path)
+
+    if covers_for_snapshot.empty:
+        st.sidebar.info("No covers available for snapshot.")
+        return
+
+    covers_for_snapshot["display_name"] = (
+        covers_for_snapshot["cover_id"]
+        + " - "
+        + covers_for_snapshot["title"]
+        + " / "
+        + covers_for_snapshot["artist"]
+    )
+
+    selected_cover_display = st.sidebar.selectbox(
+        "Select Cover",
+        covers_for_snapshot["display_name"].tolist(),
+    )
+
+    selected_cover_id = selected_cover_display.split(" - ")[0]
+
+    snapshots_df = pd.read_csv(snapshots_path)
+
+    latest_snapshot = get_latest_snapshot(
+        snapshots_df,
+        selected_cover_id,
+    )
+
+    render_latest_snapshot_preview(latest_snapshot)
+
+    default_views = 0
+    default_likes = 0
+    default_comments = 0
+    default_saves = 0
+    default_shares = 0
+
+    if latest_snapshot is not None:
+        default_views = int(latest_snapshot["views"])
+        default_likes = int(latest_snapshot["likes"])
+        default_comments = int(latest_snapshot["comments"])
+        default_saves = int(latest_snapshot["saves"])
+        default_shares = int(latest_snapshot["shares"])
+
+    with st.sidebar.form("add_metric_snapshot_form"):
+        snapshot_date = st.date_input("Snapshot Date")
+
+        snapshot_views = st.number_input(
+            "Snapshot Views",
+            min_value=0,
+            value=default_views,
+            step=1,
+        )
+
+        snapshot_likes = st.number_input(
+            "Snapshot Likes",
+            min_value=0,
+            value=default_likes,
+            step=1,
+        )
+
+        snapshot_comments = st.number_input(
+            "Snapshot Comments",
+            min_value=0,
+            value=default_comments,
+            step=1,
+        )
+
+        snapshot_saves = st.number_input(
+            "Snapshot Saves",
+            min_value=0,
+            value=default_saves,
+            step=1,
+        )
+
+        snapshot_shares = st.number_input(
+            "Snapshot Shares",
+            min_value=0,
+            value=default_shares,
+            step=1,
+        )
+
+        snapshot_submitted = st.form_submit_button("Add Snapshot")
+
+        if snapshot_submitted:
+            snapshots_df = pd.read_csv(snapshots_path)
+
+            is_valid_snapshot = validate_new_snapshot_values(
+                latest_snapshot,
+                snapshot_views,
+                snapshot_likes,
+                snapshot_comments,
+                snapshot_saves,
+                snapshot_shares,
+            )
+
+            if not is_valid_snapshot:
+                st.stop()
+
+            new_snapshot_id = generate_next_id(
+                snapshots_df,
+                "snapshot_id",
+                "S",
+            )
+
+            new_snapshot = {
+                "snapshot_id": new_snapshot_id,
+                "cover_id": selected_cover_id,
+                "snapshot_date": str(snapshot_date),
+                "views": snapshot_views,
+                "likes": snapshot_likes,
+                "comments": snapshot_comments,
+                "saves": snapshot_saves,
+                "shares": snapshot_shares,
+            }
+
+            views_diff = snapshot_views
+            likes_diff = snapshot_likes
+            comments_diff = snapshot_comments
+            saves_diff = snapshot_saves
+            shares_diff = snapshot_shares
+
+            if latest_snapshot is not None:
+                views_diff = snapshot_views - latest_snapshot["views"]
+                likes_diff = snapshot_likes - latest_snapshot["likes"]
+                comments_diff = snapshot_comments - latest_snapshot["comments"]
+                saves_diff = snapshot_saves - latest_snapshot["saves"]
+                shares_diff = snapshot_shares - latest_snapshot["shares"]
+
+            st.sidebar.info(
+                f"Snapshot difference → "
+                f"Views: {views_diff}, "
+                f"Likes: {likes_diff}, "
+                f"Comments: {comments_diff}, "
+                f"Saves: {saves_diff}, "
+                f"Shares: {shares_diff}"
+            )
+
+            updated_snapshots_df = pd.concat(
+                [snapshots_df, pd.DataFrame([new_snapshot])],
+                ignore_index=True,
+            )
+
+            updated_snapshots_df.to_csv(
+                snapshots_path,
+                index=False,
+                encoding="utf-8-sig",
+            )
+
+            st.success("Metric snapshot added successfully!")
+
+            st.rerun()
+
+
+def render_sidebar_forms(data_path: str, snapshots_path: str):
+    """
+    Sidebar formlarını tek noktadan çalıştırır.
+
+    Şu anda iki formu yönetir:
+    - Add New Cover
+    - Add Metric Snapshot
+    """
+    render_add_new_cover_form(data_path, snapshots_path)
+    render_add_metric_snapshot_form(data_path, snapshots_path)
