@@ -2,6 +2,16 @@ import pandas as pd
 import streamlit as st
 from datetime import datetime
 import os
+from pathlib import Path
+
+from src.candidate_history_analyzer import (
+    load_candidate_history,
+    normalize_candidate_history,
+    get_candidate_history_summary,
+    get_top_candidates,
+    get_genre_candidate_performance,
+    generate_candidate_history_insights,
+)
 
 try:
     from src.pattern_analyzer import (
@@ -33,6 +43,7 @@ from src.analyzer import (
 DATA_PATH = "data/covers.csv"
 SNAPSHOTS_PATH = "data/metrics_snapshots.csv"
 CANDIDATE_TESTS_PATH = "data/candidate_tests.csv"
+CANDIDATE_TEST_HISTORY_PATH = Path("data/candidate_tests.csv")
 
 def save_candidate_test_result(
     file_path: str,
@@ -1064,3 +1075,81 @@ try:
 except Exception as error:
     st.error("V2 Pattern Analytics could not be loaded.")
     st.exception(error)
+
+st.divider()
+
+st.header("V2.8 Candidate History Analytics")
+
+candidate_history_raw_df = load_candidate_history(CANDIDATE_TEST_HISTORY_PATH)
+candidate_history_df = normalize_candidate_history(candidate_history_raw_df)
+
+if candidate_history_df.empty:
+    st.info(
+        "Henüz candidate test geçmişi bulunamadı. "
+        "Önce V2.5 / V2.7 tarafında birkaç candidate test kaydı oluştur."
+    )
+else:
+    history_summary = get_candidate_history_summary(candidate_history_df)
+
+    col1, col2, col3, col4 = st.columns(4)
+
+    with col1:
+        st.metric(
+            "Total Candidate Tests",
+            history_summary["total_tests"]
+        )
+
+    with col2:
+        st.metric(
+            "Average Score",
+            history_summary["average_score"]
+        )
+
+    with col3:
+        st.metric(
+            "Best Score",
+            history_summary["best_score"]
+        )
+
+    with col4:
+        st.metric(
+            "Average Confidence",
+            history_summary["average_confidence"]
+        )
+
+    st.subheader("Best Candidate So Far")
+    st.success(history_summary["best_candidate"])
+
+    st.subheader("Candidate History Insights")
+
+    history_insights = generate_candidate_history_insights(candidate_history_df)
+
+    for insight in history_insights:
+        st.write(f"- {insight}")
+
+    st.subheader("Top Candidate Tests")
+
+    top_candidates_df = get_top_candidates(candidate_history_df)
+
+    st.dataframe(
+        top_candidates_df,
+        use_container_width=True,
+        hide_index=True
+    )
+
+    st.subheader("Genre-Based Candidate Performance")
+
+    genre_performance_df = get_genre_candidate_performance(candidate_history_df)
+
+    if genre_performance_df.empty:
+        st.info("Genre bazlı analiz için yeterli veri bulunamadı.")
+    else:
+        st.dataframe(
+            genre_performance_df,
+            use_container_width=True,
+            hide_index=True
+        )
+
+        st.bar_chart(
+            genre_performance_df.set_index("genre")["average_score"]
+        )
