@@ -1,5 +1,9 @@
-import pandas as pd
 import streamlit as st
+
+from src.data_manager import (
+    load_covers_raw,
+    load_snapshots_raw,
+)
 
 from src.candidate_test_repository import save_candidate_test_result
 from src.pattern_analyzer import (
@@ -11,17 +15,13 @@ from src.pattern_analyzer import (
 )
 
 
-def render_pattern_section(
-    data_path: str,
-    snapshots_path: str,
-    candidate_tests_path: str,
-) -> None:
+def render_pattern_section() -> None:
     """
     V2 Pattern Analytics ve V2 Next Cover Candidate Test ekranını render eder.
 
     Bu dosya sadece Streamlit UI tarafını yönetir.
     Pattern hesaplama işleri src/pattern_analyzer.py içinde kalır.
-    Candidate test sonucu kaydetme işi src/candidate_test_repository.py içinde kalır.
+    CSV okuma/yazma işleri src/data_manager.py üzerinden yönetilir.
     """
 
     st.markdown("---")
@@ -32,8 +32,8 @@ def render_pattern_section(
     )
 
     try:
-        covers_df_v2 = pd.read_csv(data_path)
-        snapshots_df_v2 = pd.read_csv(snapshots_path)
+        covers_df_v2 = load_covers_raw()
+        snapshots_df_v2 = load_snapshots_raw()
 
         pattern_summaries = get_all_pattern_summaries(
             covers_df_v2,
@@ -76,7 +76,6 @@ def render_pattern_section(
 
         render_candidate_test_section(
             pattern_summaries=pattern_summaries,
-            candidate_tests_path=candidate_tests_path,
         )
 
     except Exception as error:
@@ -85,7 +84,6 @@ def render_pattern_section(
 
 def render_candidate_test_section(
     pattern_summaries: dict,
-    candidate_tests_path: str,
 ) -> None:
     """
     V2 Next Cover Candidate Test ekranını render eder.
@@ -193,7 +191,6 @@ def render_candidate_test_section(
 
     if st.button("Save Candidate Test Result", key="save_candidate_button"):
         save_candidate_test_result(
-            candidate_tests_path,
             last_candidate_test["genre"],
             last_candidate_test["artist"],
             last_candidate_test["content_type"],

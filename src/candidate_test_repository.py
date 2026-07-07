@@ -1,20 +1,19 @@
-import os
 from datetime import datetime
 
-import pandas as pd
+from src.data_manager import append_candidate_test
 
 
 def save_candidate_test_result(
-    file_path: str,
     genre: str,
     artist: str,
     content_type: str,
     candidate_summary: dict,
 ) -> None:
     """
-    Candidate test sonucunu CSV dosyasına kaydeder.
+    Candidate test sonucunu kayda hazırlar.
 
-    Bu dosya UI değil, veri yazma sorumluluğunu taşır.
+    CSV yazma işlemi src/data_manager.py içindeki
+    append_candidate_test fonksiyonu üzerinden yapılır.
     """
 
     new_record = {
@@ -28,14 +27,4 @@ def save_candidate_test_result(
         "action": candidate_summary["action"],
     }
 
-    os.makedirs(os.path.dirname(file_path), exist_ok=True)
-
-    new_df = pd.DataFrame([new_record])
-
-    if os.path.exists(file_path):
-        existing_df = pd.read_csv(file_path)
-        updated_df = pd.concat([existing_df, new_df], ignore_index=True)
-    else:
-        updated_df = new_df
-
-    updated_df.to_csv(file_path, index=False)
+    append_candidate_test(new_record)

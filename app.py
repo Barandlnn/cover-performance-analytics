@@ -1,8 +1,7 @@
 import streamlit as st
 
 from src.data_manager import (
-    DATA_PATH,
-    SNAPSHOTS_PATH,
+    
     CANDIDATE_TESTS_PATH,
     load_current_cover_data,
     load_covers_raw,
@@ -43,7 +42,7 @@ snapshots_df = load_snapshots_raw()
 # SIDEBAR FORMS
 # -----------------------------
 
-render_sidebar_forms(DATA_PATH, SNAPSHOTS_PATH)
+render_sidebar_forms()
 
 
 # -----------------------------
@@ -79,11 +78,7 @@ render_growth_section(covers_df, snapshots_df)
 # PATTERN ANALYTICS
 # -----------------------------
 
-render_pattern_section(
-    DATA_PATH,
-    SNAPSHOTS_PATH,
-    CANDIDATE_TESTS_PATH,
-)
+render_pattern_section()
 
 
 # -----------------------------

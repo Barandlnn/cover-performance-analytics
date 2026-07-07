@@ -1,6 +1,13 @@
 import pandas as pd
 import streamlit as st
 
+from src.data_manager import (
+    load_covers_raw,
+    load_snapshots_raw,
+    append_new_cover,
+    append_metric_snapshot,
+)
+
 
 def generate_next_id(df: pd.DataFrame, id_column: str, prefix: str) -> str:
     """
@@ -137,7 +144,7 @@ def validate_new_snapshot_values(
     return not has_invalid_snapshot
 
 
-def render_add_new_cover_form(data_path: str, snapshots_path: str):
+def render_add_new_cover_form():
     """
     Sidebar içindeki Add New Cover formunu render eder.
 
@@ -240,8 +247,8 @@ def render_add_new_cover_form(data_path: str, snapshots_path: str):
                 st.warning("Please fill title, artist and genre fields.")
                 return
 
-            covers_df = pd.read_csv(data_path)
-            snapshots_df = pd.read_csv(snapshots_path)
+            covers_df = load_covers_raw()
+            snapshots_df = load_snapshots_raw()
 
             new_cover_id = generate_next_id(covers_df, "cover_id", "C")
             new_snapshot_id = generate_next_id(snapshots_df, "snapshot_id", "S")
@@ -284,34 +291,15 @@ def render_add_new_cover_form(data_path: str, snapshots_path: str):
                 "shares": shares,
             }
 
-            updated_covers_df = pd.concat(
-                [covers_df, pd.DataFrame([new_cover])],
-                ignore_index=True,
-            )
-
-            updated_snapshots_df = pd.concat(
-                [snapshots_df, pd.DataFrame([new_snapshot])],
-                ignore_index=True,
-            )
-
-            updated_covers_df.to_csv(
-                data_path,
-                index=False,
-                encoding="utf-8-sig",
-            )
-
-            updated_snapshots_df.to_csv(
-                snapshots_path,
-                index=False,
-                encoding="utf-8-sig",
-            )
+            append_new_cover(new_cover)
+            append_metric_snapshot(new_snapshot)
 
             st.success("Cover and first metric snapshot added successfully!")
 
             st.rerun()
 
 
-def render_add_metric_snapshot_form(data_path: str, snapshots_path: str):
+def render_add_metric_snapshot_form():
     """
     Sidebar içindeki Add Metric Snapshot formunu render eder.
 
@@ -320,7 +308,7 @@ def render_add_metric_snapshot_form(data_path: str, snapshots_path: str):
     st.sidebar.divider()
     st.sidebar.header("Add Metric Snapshot")
 
-    covers_for_snapshot = pd.read_csv(data_path)
+    covers_for_snapshot = load_covers_raw()
 
     if covers_for_snapshot.empty:
         st.sidebar.info("No covers available for snapshot.")
@@ -341,7 +329,7 @@ def render_add_metric_snapshot_form(data_path: str, snapshots_path: str):
 
     selected_cover_id = selected_cover_display.split(" - ")[0]
 
-    snapshots_df = pd.read_csv(snapshots_path)
+    snapshots_df = load_snapshots_raw()
 
     latest_snapshot = get_latest_snapshot(
         snapshots_df,
@@ -404,7 +392,7 @@ def render_add_metric_snapshot_form(data_path: str, snapshots_path: str):
         snapshot_submitted = st.form_submit_button("Add Snapshot")
 
         if snapshot_submitted:
-            snapshots_df = pd.read_csv(snapshots_path)
+            snapshots_df = load_snapshots_raw()
 
             is_valid_snapshot = validate_new_snapshot_values(
                 latest_snapshot,
@@ -457,23 +445,14 @@ def render_add_metric_snapshot_form(data_path: str, snapshots_path: str):
                 f"Shares: {shares_diff}"
             )
 
-            updated_snapshots_df = pd.concat(
-                [snapshots_df, pd.DataFrame([new_snapshot])],
-                ignore_index=True,
-            )
-
-            updated_snapshots_df.to_csv(
-                snapshots_path,
-                index=False,
-                encoding="utf-8-sig",
-            )
+            append_metric_snapshot(new_snapshot)
 
             st.success("Metric snapshot added successfully!")
 
             st.rerun()
 
 
-def render_sidebar_forms(data_path: str, snapshots_path: str):
+def render_sidebar_forms():
     """
     Sidebar formlarını tek noktadan çalıştırır.
 
@@ -481,5 +460,5 @@ def render_sidebar_forms(data_path: str, snapshots_path: str):
     - Add New Cover
     - Add Metric Snapshot
     """
-    render_add_new_cover_form(data_path, snapshots_path)
-    render_add_metric_snapshot_form(data_path, snapshots_path)
+    render_add_new_cover_form()
+    render_add_metric_snapshot_form()
