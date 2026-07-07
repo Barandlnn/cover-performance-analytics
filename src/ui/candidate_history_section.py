@@ -35,7 +35,7 @@ def render_candidate_history_section(candidate_history_path: str) -> None:
 
     st.dataframe(
         candidate_history_df,
-        use_container_width=True,
+        width="stretch",
         hide_index=True,
     )
 
@@ -46,7 +46,7 @@ def render_candidate_history_section(candidate_history_path: str) -> None:
 
     st.dataframe(
         summary_df,
-        use_container_width=True,
+        width="stretch",
         hide_index=True,
     )
 
@@ -63,7 +63,7 @@ def render_candidate_history_section(candidate_history_path: str) -> None:
 
     st.dataframe(
         top_candidates_df,
-        use_container_width=True,
+        width="stretch",
         hide_index=True,
     )
 
@@ -76,7 +76,7 @@ def render_candidate_history_section(candidate_history_path: str) -> None:
     else:
         st.dataframe(
             genre_performance_df,
-            use_container_width=True,
+            width="stretch",
             hide_index=True,
         )
 

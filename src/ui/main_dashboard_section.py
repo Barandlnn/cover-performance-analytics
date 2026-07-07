@@ -109,7 +109,7 @@ def render_all_covers_table(filtered_df):
     st.dataframe(
         filtered_df[get_existing_columns(filtered_df, MAIN_TABLE_COLUMNS)],
         hide_index=True,
-        use_container_width=True,
+        width="stretch",
     )
 
 
@@ -122,7 +122,7 @@ def render_top_covers_table(top_covers):
     st.dataframe(
         top_covers[get_existing_columns(top_covers, TOP_COVERS_COLUMNS)],
         hide_index=True,
-        use_container_width=True,
+        width="stretch",
     )
 
 

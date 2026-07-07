@@ -62,7 +62,7 @@ def render_pattern_section(
         else:
             st.dataframe(
                 pattern_recommendations,
-                use_container_width=True,
+                width="stretch",
             )
 
             top_recommendation = pattern_recommendations.iloc[0]
@@ -188,7 +188,7 @@ def render_candidate_test_section(
 
     st.dataframe(
         candidate_details_df,
-        use_container_width=True,
+        width="stretch",
     )
 
     if st.button("Save Candidate Test Result", key="save_candidate_button"):

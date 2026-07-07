@@ -118,10 +118,10 @@ def render_growth_summary(growth_summary: pd.DataFrame) -> None:
     if available_columns:
         st.dataframe(
             growth_summary[available_columns],
-            use_container_width=True,
+            width="stretch",
         )
     else:
-        st.dataframe(growth_summary, use_container_width=True)
+        st.dataframe(growth_summary, width="stretch")
 
     with st.expander("Debug: Growth Summary Columns"):
         st.write(list(growth_summary.columns))
@@ -188,7 +188,7 @@ def render_selected_cover_snapshot_history(
     st.dataframe(
         cover_history[available_history_columns],
         hide_index=True,
-        use_container_width=True,
+       width="stretch",
     )
 
     chart_history = cover_history.copy()
