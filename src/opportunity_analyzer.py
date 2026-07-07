@@ -22,16 +22,29 @@ REQUIRED_COLUMNS = [
 ]
 
 
-def load_opportunity_signals(file_path: str) -> pd.DataFrame:
+def load_opportunity_signals(file_path: str | None = None) -> pd.DataFrame:
     """
-    V3 Opportunity Finder için dış pazar / trend sinyallerini okur.
+    Backward compatibility wrapper.
 
-    Bu dosya bizim kendi cover performanslarımızı değil,
-    piyasada gözlemlediğimiz fırsat sinyallerini temsil eder.
+    opportunity_signals.csv okuma işlemi artık data_manager.py sorumluluğundadır.
+    Eski çağrılar kırılmasın diye bu fonksiyon korunur.
     """
-    df = pd.read_csv(file_path)
+    from src.data_manager import load_opportunity_signals_raw
 
-    missing_columns = [col for col in REQUIRED_COLUMNS if col not in df.columns]
+    df = load_opportunity_signals_raw()
+
+    required_columns = [
+        "candidate_title",
+        "market_reaction_score",
+        "audience_fit",
+        "production_fit",
+        "competition_gap_score",
+    ]
+
+    missing_columns = [
+        col for col in required_columns
+        if col not in df.columns
+    ]
 
     if missing_columns:
         raise ValueError(
@@ -39,7 +52,6 @@ def load_opportunity_signals(file_path: str) -> pd.DataFrame:
         )
 
     return df
-
 
 def calculate_market_reaction_score(df: pd.DataFrame) -> pd.DataFrame:
     """

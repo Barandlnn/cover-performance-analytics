@@ -1,7 +1,6 @@
 from pathlib import Path
 import pandas as pd
 
-from src.analyzer import load_data
 
 
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -10,6 +9,7 @@ DATA_DIR = BASE_DIR / "data"
 DATA_PATH = DATA_DIR / "covers.csv"
 SNAPSHOTS_PATH = DATA_DIR / "metrics_snapshots.csv"
 CANDIDATE_TESTS_PATH = DATA_DIR / "candidate_tests.csv"
+OPPORTUNITY_SIGNALS_PATH = DATA_DIR / "opportunity_signals.csv"
 
 def append_row_to_csv(file_path, row_data: dict) -> None:
     """
@@ -56,10 +56,65 @@ def load_current_cover_data() -> pd.DataFrame:
     """
     Ana dashboard için güncel cover verisini yükler.
 
-    src.analyzer.load_data(), covers.csv ile metrics_snapshots.csv
-    içindeki en güncel snapshot verisini birleştirir.
+    covers.csv dosyasındaki sabit cover bilgilerini,
+    metrics_snapshots.csv dosyasındaki en güncel snapshot ile birleştirir.
     """
-    return load_data(str(DATA_PATH))
+    covers_df = load_covers_raw()
+    snapshots_df = load_snapshots_raw()
+
+    if "cover_id" not in covers_df.columns:
+        raise ValueError("covers.csv içinde cover_id kolonu eksik.")
+
+    if "cover_id" not in snapshots_df.columns:
+        raise ValueError("metrics_snapshots.csv içinde cover_id kolonu eksik.")
+
+    if "snapshot_date" not in snapshots_df.columns:
+        raise ValueError("metrics_snapshots.csv içinde snapshot_date kolonu eksik.")
+
+    snapshots_df = snapshots_df.copy()
+    snapshots_df["snapshot_date"] = pd.to_datetime(
+        snapshots_df["snapshot_date"],
+        errors="coerce",
+    )
+
+    snapshots_df = snapshots_df.dropna(subset=["snapshot_date"])
+
+    metric_columns = ["views", "likes", "comments", "saves", "shares"]
+
+    for col in metric_columns:
+        if col in snapshots_df.columns:
+            snapshots_df[col] = pd.to_numeric(
+                snapshots_df[col],
+                errors="coerce",
+            ).fillna(0)
+        else:
+            snapshots_df[col] = 0
+
+    snapshots_df = snapshots_df.sort_values(
+        by=["cover_id", "snapshot_date"]
+    )
+
+    latest_snapshots_df = snapshots_df.groupby(
+        "cover_id",
+        as_index=False,
+    ).tail(1)
+
+    merged_df = covers_df.merge(
+        latest_snapshots_df,
+        on="cover_id",
+        how="left",
+    )
+
+    for col in metric_columns:
+        if col in merged_df.columns:
+            merged_df[col] = pd.to_numeric(
+                merged_df[col],
+                errors="coerce",
+            ).fillna(0)
+        else:
+            merged_df[col] = 0
+
+    return merged_df
 
 
 def load_covers_raw() -> pd.DataFrame:
@@ -89,3 +144,11 @@ def load_candidate_tests_raw() -> pd.DataFrame:
         return pd.DataFrame()
 
     return pd.read_csv(CANDIDATE_TESTS_PATH)
+
+def load_opportunity_signals_raw() -> pd.DataFrame:
+    """
+    opportunity_signals.csv dosyasını yükler.
+
+    Cover Opportunity Finder için kullanılan dış/pazar sinyallerini içerir.
+    """
+    return pd.read_csv(OPPORTUNITY_SIGNALS_PATH)

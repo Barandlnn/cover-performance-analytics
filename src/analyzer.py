@@ -59,40 +59,16 @@ def _prepare_snapshots(snapshots_df: pd.DataFrame) -> pd.DataFrame:
     return snapshots
 
 
-def load_data(file_path: str) -> pd.DataFrame:
+def load_data(file_path: str | None = None) -> pd.DataFrame:
     """
-    V1.4+ Snapshot Architecture
+    Backward compatibility wrapper.
 
-    covers.csv:
-        Cover'ın sabit bilgilerini tutar.
-
-    metrics_snapshots.csv:
-        Zamanla değişen performans metriklerini tutar.
-
-    Bu fonksiyon:
-    - covers.csv dosyasını okur
-    - metrics_snapshots.csv dosyasını okur
-    - her cover için en güncel snapshot'ı bulur
-    - eski dashboard'un kullanabileceği tek birleşik DataFrame döndürür
+    CSV okuma artık data_manager.py sorumluluğundadır.
+    Eski load_data() çağrıları kırılmasın diye bu fonksiyon korunur.
     """
-    covers_path = Path(file_path)
-    data_dir = covers_path.parent
-    snapshots_path = data_dir / "metrics_snapshots.csv"
+    from src.data_manager import load_current_cover_data
 
-    covers_df = pd.read_csv(covers_path)
-    snapshots_df = pd.read_csv(snapshots_path)
-
-    _validate_columns(covers_df, ["cover_id"], "covers.csv")
-
-    snapshots_df = _prepare_snapshots(snapshots_df)
-
-    latest_snapshots_df = snapshots_df.groupby("cover_id", as_index=False).tail(1)
-
-    merged_df = covers_df.merge(
-        latest_snapshots_df,
-        on="cover_id",
-        how="left",
-    )
+    return load_current_cover_data()
 
     for col in METRIC_COLUMNS:
         merged_df[col] = pd.to_numeric(merged_df[col], errors="coerce").fillna(0)
