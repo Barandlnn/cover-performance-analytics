@@ -10,7 +10,7 @@ from src.candidate_history_analyzer import (
 )
 
 
-def render_candidate_history_section(candidate_history_path: str) -> None:
+def render_candidate_history_section() -> None:
     """
     V2.7 / V2.8 Candidate Test History ve Candidate History Analytics ekranını render eder.
 
@@ -21,7 +21,7 @@ def render_candidate_history_section(candidate_history_path: str) -> None:
     st.header("Candidate Test History")
 
     try:
-        candidate_history_df = load_candidate_history(candidate_history_path)
+        candidate_history_df = load_candidate_history()
     except FileNotFoundError:
         st.info("Henüz candidate test history dosyası bulunamadı.")
         return

@@ -2,7 +2,6 @@ import streamlit as st
 
 from src.data_manager import (
     
-    CANDIDATE_TESTS_PATH,
     load_current_cover_data,
     load_covers_raw,
     load_snapshots_raw,
@@ -85,4 +84,4 @@ render_pattern_section()
 # CANDIDATE HISTORY ANALYTICS
 # -----------------------------
 
-render_candidate_history_section(CANDIDATE_TESTS_PATH)
+render_candidate_history_section()

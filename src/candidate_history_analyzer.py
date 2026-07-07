@@ -1,5 +1,6 @@
 import pandas as pd
 
+from src.data_manager import load_candidate_tests_raw
 
 REQUIRED_COLUMNS = [
     "test_date",
@@ -13,12 +14,15 @@ REQUIRED_COLUMNS = [
 ]
 
 
-def load_candidate_history(file_path: str) -> pd.DataFrame:
+def load_candidate_history() -> pd.DataFrame:
     """
-    Kaydedilmiş candidate test geçmişini CSV dosyasından okur.
+    Kaydedilmiş candidate test geçmişini data_manager üzerinden okur.
+
+    Bu fonksiyon artık CSV path bilmez.
+    Dosyanın nereden okunacağını src/data_manager.py yönetir.
     """
     try:
-        df = pd.read_csv(file_path)
+        df = load_candidate_tests_raw()
     except FileNotFoundError:
         return pd.DataFrame(columns=REQUIRED_COLUMNS)
 
