@@ -71,28 +71,58 @@ TOP_COVERS_COLUMNS = [
 ]
 
 
-def get_existing_columns(df, columns):
+def _get_existing_columns(df, columns):
     """
-    DataFrame içinde gerçekten var olan kolonları döndürür.
+    Return only the columns that actually exist in the DataFrame.
 
-    Bu küçük güvenlik sayesinde ileride bir kolon adı değişirse
-    tüm dashboard direkt çökmek yerine mevcut kolonlarla çalışabilir.
+    This prevents the dashboard from crashing if a column is renamed,
+    removed, or not available yet in older CSV data.
     """
     return [column for column in columns if column in df.columns]
 
 
-def render_overview_metrics(filtered_df):
+def _get_numeric_mean(df, column_name):
     """
-    Dashboard üstündeki KPI kartlarını gösterir.
+    Safely calculate a numeric column average.
+    """
+    if column_name not in df.columns or df.empty:
+        return 0
+
+    return df[column_name].mean()
+
+
+def _get_numeric_max(df, column_name):
+    """
+    Safely calculate a numeric column maximum.
+    """
+    if column_name not in df.columns or df.empty:
+        return 0
+
+    return df[column_name].max()
+
+
+def _get_row_value(row, column_name, default_value="-"):
+    """
+    Safely read a value from a pandas Series row.
+    """
+    if column_name not in row.index:
+        return default_value
+
+    return row[column_name]
+
+
+def _render_overview_metrics(filtered_df):
+    """
+    Render the main KPI cards at the top of the dashboard.
     """
     st.subheader("Overview")
 
     col1, col2, col3, col4 = st.columns(4)
 
     total_covers = len(filtered_df)
-    average_engagement = filtered_df["engagement_rate"].mean()
-    average_save_rate = filtered_df["save_rate"].mean()
-    best_score = filtered_df["performance_score"].max()
+    average_engagement = _get_numeric_mean(filtered_df, "engagement_rate")
+    average_save_rate = _get_numeric_mean(filtered_df, "save_rate")
+    best_score = _get_numeric_max(filtered_df, "performance_score")
 
     col1.metric("Total Covers", total_covers)
     col2.metric("Avg Engagement Rate", f"{average_engagement:.2f}%")
@@ -100,61 +130,97 @@ def render_overview_metrics(filtered_df):
     col4.metric("Best Score", f"{best_score:.2f}")
 
 
-def render_all_covers_table(filtered_df):
+def _render_all_covers_table(filtered_df):
     """
-    Tüm cover kayıtlarını tablo olarak gösterir.
+    Render all filtered cover records as a table.
     """
     st.subheader("All Covers")
 
+    existing_columns = _get_existing_columns(filtered_df, MAIN_TABLE_COLUMNS)
+
+    if not existing_columns:
+        st.warning("No displayable columns found for the cover table.")
+        return
+
     st.dataframe(
-        filtered_df[get_existing_columns(filtered_df, MAIN_TABLE_COLUMNS)],
+        filtered_df[existing_columns],
         hide_index=True,
         width="stretch",
     )
 
 
-def render_top_covers_table(top_covers):
+def _render_top_covers_table(top_covers):
     """
-    En iyi performans gösteren coverları tablo olarak gösterir.
+    Render the best performing covers as a table.
     """
     st.subheader("Top Performing Covers")
 
+    if top_covers.empty:
+        st.info("No top cover data available yet.")
+        return
+
+    existing_columns = _get_existing_columns(top_covers, TOP_COVERS_COLUMNS)
+
+    if not existing_columns:
+        st.warning("No displayable columns found for the top covers table.")
+        return
+
     st.dataframe(
-        top_covers[get_existing_columns(top_covers, TOP_COVERS_COLUMNS)],
+        top_covers[existing_columns],
         hide_index=True,
         width="stretch",
     )
 
 
-def render_performance_chart(filtered_df):
+def _render_performance_chart(filtered_df):
     """
-    Cover başlığına göre performance_score grafiğini gösterir.
+    Render the performance score chart by cover title.
     """
     st.subheader("Performance Score Chart")
+
+    required_columns = ["title", "performance_score"]
+    missing_columns = [
+        column for column in required_columns if column not in filtered_df.columns
+    ]
+
+    if missing_columns:
+        st.warning(
+            "Performance chart cannot be displayed. "
+            f"Missing columns: {', '.join(missing_columns)}"
+        )
+        return
+
+    if filtered_df.empty:
+        st.info("No data available for the performance chart.")
+        return
 
     chart_data = filtered_df.set_index("title")["performance_score"]
 
     st.bar_chart(chart_data)
 
 
-def render_quick_insights(filtered_df, top_covers):
+def _render_quick_insights(filtered_df, top_covers):
     """
-    En iyi cover üzerinden kısa yorum ve AI-like insight üretir.
+    Render a short summary and AI-like insights for the best cover.
     """
     st.subheader("Quick Insights")
 
+    if top_covers.empty:
+        st.info("No cover data available for insights yet.")
+        return
+
     best_cover = top_covers.iloc[0]
 
-    st.success(f"Best performing cover: {best_cover['title']}")
+    st.success(f"Best performing cover: {_get_row_value(best_cover, 'title')}")
 
-    st.write(f"Artist: **{best_cover['artist']}**")
-    st.write(f"Genre: **{best_cover['genre']}**")
-    st.write(f"Hook type: **{best_cover['hook_type']}**")
-    st.write(f"Vocal style: **{best_cover['vocal_style']}**")
-    st.write(f"Performance score: **{best_cover['performance_score']}**")
-    st.write(f"Engagement rate: **{best_cover['engagement_rate']}%**")
-    st.write(f"Save rate: **{best_cover['save_rate']}%**")
-    st.write(f"Share rate: **{best_cover['share_rate']}%**")
+    st.write(f"Artist: **{_get_row_value(best_cover, 'artist')}**")
+    st.write(f"Genre: **{_get_row_value(best_cover, 'genre')}**")
+    st.write(f"Hook type: **{_get_row_value(best_cover, 'hook_type')}**")
+    st.write(f"Vocal style: **{_get_row_value(best_cover, 'vocal_style')}**")
+    st.write(f"Performance score: **{_get_row_value(best_cover, 'performance_score')}**")
+    st.write(f"Engagement rate: **{_get_row_value(best_cover, 'engagement_rate')}%**")
+    st.write(f"Save rate: **{_get_row_value(best_cover, 'save_rate')}%**")
+    st.write(f"Share rate: **{_get_row_value(best_cover, 'share_rate')}%**")
 
     st.info(
         "This result suggests that this type of cover may match your audience better. "
@@ -163,7 +229,11 @@ def render_quick_insights(filtered_df, top_covers):
 
     st.subheader("AI-Like Interpretation")
 
-    insights = generate_insights(filtered_df, best_cover)
+    try:
+        insights = generate_insights(filtered_df, best_cover)
+    except KeyError as error:
+        st.warning(f"Insights could not be generated. Missing column: {error}")
+        return
 
     for insight in insights:
         st.write(f"- {insight}")
@@ -171,20 +241,16 @@ def render_quick_insights(filtered_df, top_covers):
 
 def render_main_dashboard_section(filtered_df):
     """
-    Ana dashboard bölümünü tek noktadan render eder.
+    Render the full main dashboard section.
 
-    Bu fonksiyon şunları yönetir:
-    - Overview KPI kartları
-    - All Covers tablosu
-    - Top Covers tablosu
-    - Performance Score grafiği
-    - Quick Insights
+    This function is the public entry point used by app.py.
+    Internal rendering details are handled by private helper functions.
     """
-    render_overview_metrics(filtered_df)
-    render_all_covers_table(filtered_df)
+    _render_overview_metrics(filtered_df)
+    _render_all_covers_table(filtered_df)
 
     top_covers = get_top_covers(filtered_df)
 
-    render_top_covers_table(top_covers)
-    render_performance_chart(filtered_df)
-    render_quick_insights(filtered_df, top_covers)
+    _render_top_covers_table(top_covers)
+    _render_performance_chart(filtered_df)
+    _render_quick_insights(filtered_df, top_covers)
