@@ -12,12 +12,12 @@ from src.candidate_history_analyzer import (
 
 def render_candidate_history_section() -> None:
     """
-    V2.7 / V2.8 Candidate Test History ve Candidate History Analytics ekranını render eder.
+    Render the Candidate Test History and Candidate History Analytics section.
 
-    Bu dosya sadece Streamlit UI tarafını yönetir.
-    Hesaplama işleri src/candidate_history_analyzer.py içinde kalır.
+    This module only manages the Streamlit UI layer. Candidate history loading,
+    normalization, summary calculation, and insight generation are handled by
+    src.candidate_history_analyzer.
     """
-
     st.header("Candidate Test History")
 
     try:
