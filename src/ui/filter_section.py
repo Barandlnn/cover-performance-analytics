@@ -1,17 +1,13 @@
-import streamlit as st
 import pandas as pd
+import streamlit as st
 
 
 def get_filter_options(df: pd.DataFrame, column_name: str) -> list:
     """
-    Verilen kolon için sidebar filtre seçeneklerini üretir.
+    Return sidebar filter options for the given DataFrame column.
 
-    Örnek:
-    platform kolonu için:
-    ["All", "Instagram", "TikTok", "YouTube"]
-
-    Not:
-    dropna() kullanıyoruz çünkü boş değerler selectbox içinde sorun çıkarabilir.
+    The returned list always starts with "All". Empty values are ignored
+    so they do not appear as selectable filter options.
     """
     if column_name not in df.columns:
         return ["All"]
@@ -33,7 +29,7 @@ def apply_sidebar_filters(
     selected_genre: str,
 ) -> pd.DataFrame:
     """
-    Seçilen sidebar filtrelerine göre DataFrame'i filtreler.
+    Apply the selected sidebar filters to the given DataFrame.
     """
     filtered_df = df.copy()
 
@@ -48,11 +44,7 @@ def apply_sidebar_filters(
 
 def render_sidebar_filters(df: pd.DataFrame) -> pd.DataFrame:
     """
-    Sidebar filtrelerini render eder ve filtrelenmiş DataFrame döndürür.
-
-    Şu anda iki filtre var:
-    - Platform Filter
-    - Genre Filter
+    Render sidebar filter widgets and return the filtered DataFrame.
     """
     st.sidebar.header("Filters")
 
@@ -79,7 +71,7 @@ def render_sidebar_filters(df: pd.DataFrame) -> pd.DataFrame:
 
 def stop_if_filtered_data_empty(filtered_df: pd.DataFrame):
     """
-    Filtre sonucu boşsa kullanıcıya uyarı verir ve uygulama akışını durdurur.
+    Stop the Streamlit app when the selected filters return no data.
     """
     if filtered_df.empty:
         st.warning("No covers found for the selected filters.")
