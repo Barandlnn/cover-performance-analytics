@@ -1,4 +1,4 @@
-import pandas as pd
+﻿import pandas as pd
 import streamlit as st
 
 from src.data_manager import (
@@ -9,9 +9,9 @@ from src.data_manager import (
 )
 
 
-def generate_next_id(df: pd.DataFrame, id_column: str, prefix: str) -> str:
+def _generate_next_id(df: pd.DataFrame, id_column: str, prefix: str) -> str:
     """
-    Verilen ID kolonuna göre sıradaki ID değerini üretir.
+    Verilen ID kolonuna gÃ¶re sÄ±radaki ID deÄŸerini Ã¼retir.
 
     Example:
     C001, C002, C003...
@@ -36,10 +36,10 @@ def generate_next_id(df: pd.DataFrame, id_column: str, prefix: str) -> str:
     return f"{prefix}{last_number + 1:03d}"
 
 
-def calculate_hashtag_count(hashtags: str) -> int:
+def _calculate_hashtag_count(hashtags: str) -> int:
     """
-    Hashtag metninden kaç adet hashtag/etiket olduğunu hesaplar.
-    Virgül ve boşluk ayrımlarını destekler.
+    Hashtag metninden kaÃ§ adet hashtag/etiket olduÄŸunu hesaplar.
+    VirgÃ¼l ve boÅŸluk ayrÄ±mlarÄ±nÄ± destekler.
     """
     clean_hashtags = hashtags.strip()
 
@@ -52,13 +52,13 @@ def calculate_hashtag_count(hashtags: str) -> int:
     )
 
 
-def get_latest_snapshot(
+def _get_latest_snapshot(
     snapshots_df: pd.DataFrame,
     selected_cover_id: str,
 ):
     """
-    Seçili cover için en son metric snapshot kaydını döndürür.
-    Eğer snapshot yoksa None döndürür.
+    SeÃ§ili cover iÃ§in en son metric snapshot kaydÄ±nÄ± dÃ¶ndÃ¼rÃ¼r.
+    EÄŸer snapshot yoksa None dÃ¶ndÃ¼rÃ¼r.
     """
     selected_snapshots_df = snapshots_df[
         snapshots_df["cover_id"] == selected_cover_id
@@ -79,9 +79,9 @@ def get_latest_snapshot(
     return selected_snapshots_df.iloc[-1]
 
 
-def render_latest_snapshot_preview(latest_snapshot):
+def _render_latest_snapshot_preview(latest_snapshot):
     """
-    Sidebar içinde seçili cover'ın son snapshot bilgisini gösterir.
+    Sidebar iÃ§inde seÃ§ili cover'Ä±n son snapshot bilgisini gÃ¶sterir.
     """
     if latest_snapshot is None:
         return
@@ -102,7 +102,7 @@ def render_latest_snapshot_preview(latest_snapshot):
     st.sidebar.write(f"Shares: **{latest_snapshot['shares']}**")
 
 
-def validate_new_snapshot_values(
+def _validate_new_snapshot_values(
     latest_snapshot,
     snapshot_views: int,
     snapshot_likes: int,
@@ -111,10 +111,10 @@ def validate_new_snapshot_values(
     snapshot_shares: int,
 ) -> bool:
     """
-    Yeni snapshot değerleri son snapshot değerlerinden düşük olamaz.
+    New snapshot values cannot be lower than the latest snapshot values.
 
-    True dönerse değerler geçerlidir.
-    False dönerse en az bir değer hatalıdır.
+    Returns True if the values are valid.
+    Returns False if at least one value is invalid.
     """
     if latest_snapshot is None:
         return True
@@ -144,11 +144,11 @@ def validate_new_snapshot_values(
     return not has_invalid_snapshot
 
 
-def render_add_new_cover_form():
+def _render_add_new_cover_form():
     """
-    Sidebar içindeki Add New Cover formunu render eder.
+    Sidebar iÃ§indeki Add New Cover formunu render eder.
 
-    Bu form iki dosyaya kayıt yapar:
+    Bu form iki dosyaya kayÄ±t yapar:
     - covers.csv
     - metrics_snapshots.csv
     """
@@ -250,11 +250,11 @@ def render_add_new_cover_form():
             covers_df = load_covers_raw()
             snapshots_df = load_snapshots_raw()
 
-            new_cover_id = generate_next_id(covers_df, "cover_id", "C")
-            new_snapshot_id = generate_next_id(snapshots_df, "snapshot_id", "S")
+            new_cover_id = _generate_next_id(covers_df, "cover_id", "C")
+            new_snapshot_id = _generate_next_id(snapshots_df, "snapshot_id", "S")
 
             clean_hashtags = hashtags.strip()
-            hashtag_count = calculate_hashtag_count(clean_hashtags)
+            hashtag_count = _calculate_hashtag_count(clean_hashtags)
 
             new_cover = {
                 "cover_id": new_cover_id,
@@ -299,11 +299,11 @@ def render_add_new_cover_form():
             st.rerun()
 
 
-def render_add_metric_snapshot_form():
+def _render_add_metric_snapshot_form():
     """
-    Sidebar içindeki Add Metric Snapshot formunu render eder.
+    Sidebar iÃ§indeki Add Metric Snapshot formunu render eder.
 
-    Bu form mevcut bir cover için yeni metric snapshot kaydı ekler.
+    Bu form mevcut bir cover iÃ§in yeni metric snapshot kaydÄ± ekler.
     """
     st.sidebar.divider()
     st.sidebar.header("Add Metric Snapshot")
@@ -331,12 +331,12 @@ def render_add_metric_snapshot_form():
 
     snapshots_df = load_snapshots_raw()
 
-    latest_snapshot = get_latest_snapshot(
+    latest_snapshot = _get_latest_snapshot(
         snapshots_df,
         selected_cover_id,
     )
 
-    render_latest_snapshot_preview(latest_snapshot)
+    _render_latest_snapshot_preview(latest_snapshot)
 
     default_views = 0
     default_likes = 0
@@ -394,7 +394,7 @@ def render_add_metric_snapshot_form():
         if snapshot_submitted:
             snapshots_df = load_snapshots_raw()
 
-            is_valid_snapshot = validate_new_snapshot_values(
+            is_valid_snapshot = _validate_new_snapshot_values(
                 latest_snapshot,
                 snapshot_views,
                 snapshot_likes,
@@ -406,7 +406,7 @@ def render_add_metric_snapshot_form():
             if not is_valid_snapshot:
                 st.stop()
 
-            new_snapshot_id = generate_next_id(
+            new_snapshot_id = _generate_next_id(
                 snapshots_df,
                 "snapshot_id",
                 "S",
@@ -437,7 +437,7 @@ def render_add_metric_snapshot_form():
                 shares_diff = snapshot_shares - latest_snapshot["shares"]
 
             st.sidebar.info(
-                f"Snapshot difference → "
+                f"Snapshot difference â†’ "
                 f"Views: {views_diff}, "
                 f"Likes: {likes_diff}, "
                 f"Comments: {comments_diff}, "
@@ -454,11 +454,11 @@ def render_add_metric_snapshot_form():
 
 def render_sidebar_forms():
     """
-    Sidebar formlarını tek noktadan çalıştırır.
+    Sidebar formlarÄ±nÄ± tek noktadan Ã§alÄ±ÅŸtÄ±rÄ±r.
 
-    Şu anda iki formu yönetir:
+    Åžu anda iki formu yÃ¶netir:
     - Add New Cover
     - Add Metric Snapshot
     """
-    render_add_new_cover_form()
-    render_add_metric_snapshot_form()
+    _render_add_new_cover_form()
+    _render_add_metric_snapshot_form()
