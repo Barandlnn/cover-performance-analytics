@@ -7,6 +7,14 @@ from src.data_manager import (
     load_snapshots_raw,
 )
 
+from src.i18n import (
+    DEFAULT_LANGUAGE,
+    LANGUAGE_OPTIONS,
+    get_language_label,
+    get_language_code,
+    t,
+)
+
 from src.analyzer import calculate_metrics
 
 from src.ui.filter_section import (
@@ -23,9 +31,31 @@ from src.ui.sidebar_section import render_sidebar_forms
 
 st.set_page_config(page_title="Cover Performance Analytics", layout="wide")
 
-st.title("Cover Performance Analytics")
-st.write("Analyze your cover performances across platforms.")
 
+# -----------------------------
+# LANGUAGE SETTINGS
+# -----------------------------
+
+if "language" not in st.session_state:
+    st.session_state["language"] = DEFAULT_LANGUAGE
+
+current_language = st.session_state["language"]
+
+language_labels = list(LANGUAGE_OPTIONS.keys())
+current_language_label = get_language_label(current_language)
+
+selected_language_label = st.sidebar.selectbox(
+    "Language / Dil",
+    language_labels,
+    index=language_labels.index(current_language_label),
+)
+
+language = get_language_code(selected_language_label)
+st.session_state["language"] = language
+
+
+st.title(t("app.title", language))
+st.caption(t("app.caption", language))
 
 # -----------------------------
 # LOAD RAW DATA
