@@ -2,11 +2,14 @@ from pathlib import Path
 
 import pandas as pd
 
+from src.i18n import DEFAULT_LANGUAGE, t
 
 METRIC_COLUMNS = ["views", "likes", "comments", "saves", "shares"]
 
 
-def _validate_columns(df: pd.DataFrame, required_columns: list[str], file_name: str) -> None:
+def _validate_columns(
+    df: pd.DataFrame, required_columns: list[str], file_name: str
+) -> None:
     """
     Gerekli kolonlar var mı kontrol eder.
     Eksik kolon varsa anlaşılır hata verir.
@@ -100,9 +103,7 @@ def calculate_metrics(df: pd.DataFrame) -> pd.DataFrame:
     for col in METRIC_COLUMNS:
         df[col] = pd.to_numeric(df[col], errors="coerce").fillna(0)
 
-    df["total_engagement"] = (
-        df["likes"] + df["comments"] + df["saves"] + df["shares"]
-    )
+    df["total_engagement"] = df["likes"] + df["comments"] + df["saves"] + df["shares"]
 
     safe_views = df["views"].replace(0, pd.NA)
 
@@ -160,9 +161,7 @@ def calculate_growth_metrics(
         return pd.DataFrame()
 
     snapshot_counts = (
-        snapshots.groupby("cover_id")
-        .size()
-        .reset_index(name="snapshot_count")
+        snapshots.groupby("cover_id").size().reset_index(name="snapshot_count")
     )
 
     first_snapshots = snapshots.groupby("cover_id", as_index=False).first()
@@ -220,18 +219,14 @@ def calculate_growth_metrics(
 
     growth_df["views_growth_rate"] = growth_df.apply(
         lambda row: (
-            row["views_growth"] / row["first_views"]
-            if row["first_views"] > 0
-            else 0
+            row["views_growth"] / row["first_views"] if row["first_views"] > 0 else 0
         ),
         axis=1,
     )
 
     growth_df["likes_growth_rate"] = growth_df.apply(
         lambda row: (
-            row["likes_growth"] / row["first_likes"]
-            if row["first_likes"] > 0
-            else 0
+            row["likes_growth"] / row["first_likes"] if row["first_likes"] > 0 else 0
         ),
         axis=1,
     )
@@ -302,10 +297,7 @@ def get_growth_summary(
         "engagement_growth_rate",
     ]
 
-    available_columns = [
-        col for col in summary_columns
-        if col in growth_df.columns
-    ]
+    available_columns = [col for col in summary_columns if col in growth_df.columns]
 
     growth_summary = growth_df[available_columns].copy()
 
@@ -339,9 +331,7 @@ def get_cover_snapshot_history(
 
     cover_history["engagement_rate"] = cover_history.apply(
         lambda row: (
-            row["total_engagement"] / row["views"] * 100
-            if row["views"] > 0
-            else 0
+            row["total_engagement"] / row["views"] * 100 if row["views"] > 0 else 0
         ),
         axis=1,
     )
@@ -369,12 +359,18 @@ def get_top_covers(df: pd.DataFrame, limit: int = 5) -> pd.DataFrame:
     ).head(limit)
 
 
-def generate_insights(df: pd.DataFrame, best_cover: pd.Series) -> list[str]:
+def generate_insights(
+    df: pd.DataFrame,
+    best_cover: pd.Series,
+    language: str = DEFAULT_LANGUAGE,
+) -> list[str]:
     """
-    En iyi cover üzerinden basit yorumlar üretir.
-    Bu fonksiyon şimdilik kural tabanlı çalışır.
+    Generate localized rule-based insights for the best performing cover.
+
+    The analysis rules operate on the original dataset values.
+    Only the user-facing insight messages are localized.
     """
-    insights = []
+    insights: list[str] = []
 
     if df.empty or best_cover.empty:
         return insights
@@ -386,20 +382,26 @@ def generate_insights(df: pd.DataFrame, best_cover: pd.Series) -> list[str]:
 
     if best_cover["save_rate"] > avg_save_rate:
         insights.append(
-            "This cover has an above-average save rate. "
-            "This may suggest that people wanted to revisit or remember this performance."
+            t(
+                "analyzer.insights.above_average_save_rate",
+                language,
+            )
         )
 
     if best_cover["share_rate"] > avg_share_rate:
         insights.append(
-            "This cover has an above-average share rate. "
-            "This may indicate that the song or performance felt shareable to the audience."
+            t(
+                "analyzer.insights.above_average_share_rate",
+                language,
+            )
         )
 
     if best_cover["comment_rate"] > avg_comment_rate:
         insights.append(
-            "This cover has an above-average comment rate. "
-            "This may suggest that it triggered stronger audience reaction or discussion."
+            t(
+                "analyzer.insights.above_average_comment_rate",
+                language,
+            )
         )
 
     if (
@@ -407,50 +409,75 @@ def generate_insights(df: pd.DataFrame, best_cover: pd.Series) -> list[str]:
         and best_cover["performance_score"] == df["performance_score"].max()
     ):
         insights.append(
-            "This cover did not have the highest view count, "
-            "but it produced the best performance score. "
-            "This means the audience quality may be stronger than the raw reach."
+            t(
+                "analyzer.insights.best_score_below_average_views",
+                language,
+            )
         )
 
-    if "hook_type" in best_cover:
-        if best_cover["hook_type"] == "direct chorus":
+    if "hook_type" in best_cover.index:
+        hook_type = best_cover["hook_type"]
+
+        if hook_type == "direct chorus":
             insights.append(
-                "The cover starts with a direct chorus hook. "
-                "This can work well because the audience reaches the recognizable part quickly."
+                t(
+                    "analyzer.insights.direct_chorus_hook",
+                    language,
+                )
             )
 
-        elif best_cover["hook_type"] == "slow intro":
+        elif hook_type == "slow intro":
             insights.append(
-                "The cover uses a slow intro. "
-                "This may work well when the emotional buildup is strong, "
-                "but it can also risk early drop-off."
+                t(
+                    "analyzer.insights.slow_intro_hook",
+                    language,
+                )
             )
 
-    if "vocal_style" in best_cover:
-        if best_cover["vocal_style"] in ["powerful", "emotional"]:
+    if "vocal_style" in best_cover.index:
+        vocal_style = best_cover["vocal_style"]
+
+        if vocal_style in ["powerful", "emotional"]:
             insights.append(
-                f"The vocal style is {best_cover['vocal_style']}. "
-                "This may be one reason why the cover created stronger engagement."
+                t(
+                    "analyzer.insights.strong_vocal_style",
+                    language,
+                ).format(
+                    vocal_style=vocal_style,
+                )
             )
 
-    if "genre" in df.columns and "performance_score" in df.columns:
-        top_genre = (
-            df.groupby("genre")["performance_score"]
+    if (
+        "genre" in df.columns
+        and "genre" in best_cover.index
+        and "performance_score" in df.columns
+    ):
+        genre_performance = (
+            df.dropna(subset=["genre"])
+            .groupby("genre")["performance_score"]
             .mean()
             .sort_values(ascending=False)
-            .index[0]
         )
 
-        if best_cover["genre"] == top_genre:
-            insights.append(
-                f"{best_cover['genre']} is currently the strongest genre in your dataset. "
-                "You may want to test more covers in this direction."
-            )
+        if not genre_performance.empty:
+            top_genre = genre_performance.index[0]
+
+            if best_cover["genre"] == top_genre:
+                insights.append(
+                    t(
+                        "analyzer.insights.strongest_genre",
+                        language,
+                    ).format(
+                        genre=best_cover["genre"],
+                    )
+                )
 
     if len(df) < 10:
         insights.append(
-            "Your dataset is still small. "
-            "Add at least 10 real covers before making strong content decisions."
+            t(
+                "analyzer.insights.small_dataset",
+                language,
+            )
         )
 
     return insights

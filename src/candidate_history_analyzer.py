@@ -1,6 +1,7 @@
 import pandas as pd
 
 from src.data_manager import load_candidate_tests_raw
+from src.i18n import t
 
 REQUIRED_COLUMNS = [
     "test_date",
@@ -81,7 +82,9 @@ def get_candidate_history_summary(df: pd.DataFrame) -> dict:
         }
 
     strong_candidate_count = (
-        df["candidate_label"].astype(str).str.contains(
+        df["candidate_label"]
+        .astype(str)
+        .str.contains(
             "Strong",
             case=False,
             na=False,
@@ -89,7 +92,9 @@ def get_candidate_history_summary(df: pd.DataFrame) -> dict:
     ).sum()
 
     promising_candidate_count = (
-        df["candidate_label"].astype(str).str.contains(
+        df["candidate_label"]
+        .astype(str)
+        .str.contains(
             "Promising",
             case=False,
             na=False,
@@ -97,7 +102,9 @@ def get_candidate_history_summary(df: pd.DataFrame) -> dict:
     ).sum()
 
     needs_more_data_count = (
-        df["candidate_label"].astype(str).str.contains(
+        df["candidate_label"]
+        .astype(str)
+        .str.contains(
             "Needs More Data",
             case=False,
             na=False,
@@ -170,36 +177,63 @@ def get_genre_candidate_performance(df: pd.DataFrame) -> pd.DataFrame:
     )
 
 
-def generate_candidate_history_insights(df: pd.DataFrame) -> list[str]:
+def generate_candidate_history_insights(
+    df: pd.DataFrame,
+    language: str,
+) -> list[str]:
     """
-    Candidate test geçmişinden kısa yorumlar üretir.
+    Candidate test geçmişinden seçilen dile göre kısa yorumlar üretir.
     """
     df = normalize_candidate_history(df)
 
     if df.empty:
-        return ["No candidate test history is available yet."]
+        return [
+            t(
+                "candidate_history.insights.no_history",
+                language,
+            )
+        ]
 
     insights = []
 
     summary = get_candidate_history_summary(df)
 
     insights.append(
-        f"You have tested {summary['total_tests']} candidate cover ideas so far."
+        t(
+            "candidate_history.insights.total_tests",
+            language,
+        ).format(
+            total_tests=summary["total_tests"],
+        )
     )
 
     insights.append(
-        f"Average candidate score is {summary['average_candidate_score']}."
+        t(
+            "candidate_history.insights.average_score",
+            language,
+        ).format(
+            average_score=summary["average_candidate_score"],
+        )
     )
 
-    top_candidates_df = get_top_candidates(df, top_n=1)
+    top_candidates_df = get_top_candidates(
+        df,
+        top_n=1,
+    )
 
     if not top_candidates_df.empty:
         top_candidate = top_candidates_df.iloc[0]
 
         insights.append(
-            f"Best candidate so far: {top_candidate['genre']} / "
-            f"{top_candidate['artist']} / {top_candidate['content_type']} "
-            f"with score {top_candidate['candidate_score']}."
+            t(
+                "candidate_history.insights.best_candidate",
+                language,
+            ).format(
+                genre=top_candidate["genre"],
+                artist=top_candidate["artist"],
+                content_type=top_candidate["content_type"],
+                candidate_score=top_candidate["candidate_score"],
+            )
         )
 
     genre_performance_df = get_genre_candidate_performance(df)
@@ -208,18 +242,33 @@ def generate_candidate_history_insights(df: pd.DataFrame) -> list[str]:
         best_genre = genre_performance_df.iloc[0]
 
         insights.append(
-            f"Best tested genre is {best_genre['genre']} "
-            f"with average score {best_genre['average_score']}."
+            t(
+                "candidate_history.insights.best_genre",
+                language,
+            ).format(
+                genre=best_genre["genre"],
+                average_score=best_genre["average_score"],
+            )
         )
 
     if summary["strong_candidate_count"] > 0:
         insights.append(
-            f"{summary['strong_candidate_count']} tests were classified as Strong Candidate."
+            t(
+                "candidate_history.insights.strong_count",
+                language,
+            ).format(
+                count=summary["strong_candidate_count"],
+            )
         )
 
     if summary["needs_more_data_count"] > 0:
         insights.append(
-            f"{summary['needs_more_data_count']} tests need more data before making a strong decision."
+            t(
+                "candidate_history.insights.needs_more_data_count",
+                language,
+            ).format(
+                count=summary["needs_more_data_count"],
+            )
         )
 
     return insights

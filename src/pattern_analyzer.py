@@ -1,4 +1,5 @@
 import pandas as pd
+from src.i18n import t
 
 try:
     from src.analyzer import calculate_metrics
@@ -9,10 +10,89 @@ except Exception:
         calculate_metrics = None
 
 
-METRIC_COLUMNS = ["views", "likes", "comments", "saves", "shares"]
+METRIC_COLUMNS = [
+    "views",
+    "likes",
+    "comments",
+    "saves",
+    "shares",
+]
 
 
-def _find_cover_id_columns(covers_df: pd.DataFrame, snapshots_df: pd.DataFrame) -> tuple[str, str]:
+DIMENSION_TRANSLATION_KEYS = {
+    "genre": "pattern.dynamic.dimension.genre",
+    "artist": "pattern.dynamic.dimension.artist",
+    "content_type": ("pattern.dynamic.dimension.content_type"),
+}
+
+
+CONFIDENCE_TRANSLATION_KEYS = {
+    "High": "pattern.dynamic.confidence.high",
+    "Medium": "pattern.dynamic.confidence.medium",
+    "Low": "pattern.dynamic.confidence.low",
+    "Unknown": "pattern.dynamic.confidence.unknown",
+}
+
+
+DECISION_LABEL_TRANSLATION_KEYS = {
+    "Strong Pattern": ("pattern.dynamic.decision.strong"),
+    "Promising Pattern": ("pattern.dynamic.decision.promising"),
+    "Needs More Data": ("pattern.dynamic.decision.needs_more_data"),
+    "Weak Pattern": ("pattern.dynamic.decision.weak"),
+    "Unknown": ("pattern.dynamic.decision.unknown"),
+}
+
+
+CANDIDATE_LABEL_TRANSLATION_KEYS = {
+    "Strong Candidate": ("pattern.candidate.label.strong"),
+    "Promising Candidate": ("pattern.candidate.label.promising"),
+    "Interesting but Needs More Data": ("pattern.candidate.label.needs_more_data"),
+    "Experimental Candidate": ("pattern.candidate.label.experimental"),
+    "Weak Candidate": ("pattern.candidate.label.weak"),
+}
+
+
+def _translate_mapped_value(
+    value: str,
+    translation_keys: dict[str, str],
+    language: str,
+) -> str:
+    """
+    İç mantıkta kullanılan İngilizce sabit bir değeri
+    yalnızca gösterim için seçilen dile çevirir.
+    """
+    translation_key = translation_keys.get(value)
+
+    if translation_key is None:
+        return str(value)
+
+    return t(
+        translation_key,
+        language,
+    )
+
+
+def _get_readable_dimension(
+    dimension: str,
+    language: str,
+) -> str:
+    """
+    Pattern boyutunun kullanıcıya gösterilecek adını döndürür.
+    """
+    translation_key = DIMENSION_TRANSLATION_KEYS.get(dimension)
+
+    if translation_key is None:
+        return dimension
+
+    return t(
+        translation_key,
+        language,
+    )
+
+
+def _find_cover_id_columns(
+    covers_df: pd.DataFrame, snapshots_df: pd.DataFrame
+) -> tuple[str, str]:
     """
     covers.csv ve metrics_snapshots.csv arasındaki ortak ID kolonlarını bulur.
     V1.4/V1.6 yapısında genelde cover_id kullanıyoruz.
@@ -62,7 +142,9 @@ def _get_latest_snapshots(
     df = _ensure_numeric_metrics(df)
 
     if "snapshot_date" not in df.columns:
-        raise ValueError("metrics_snapshots.csv içinde 'snapshot_date' kolonu bulunmalı.")
+        raise ValueError(
+            "metrics_snapshots.csv içinde 'snapshot_date' kolonu bulunmalı."
+        )
 
     df["snapshot_date"] = pd.to_datetime(df["snapshot_date"], errors="coerce")
 
@@ -93,7 +175,9 @@ def _calculate_growth_by_cover(
     df = _ensure_numeric_metrics(df)
 
     if "snapshot_date" not in df.columns:
-        raise ValueError("metrics_snapshots.csv içinde 'snapshot_date' kolonu bulunmalı.")
+        raise ValueError(
+            "metrics_snapshots.csv içinde 'snapshot_date' kolonu bulunmalı."
+        )
 
     df["snapshot_date"] = pd.to_datetime(df["snapshot_date"], errors="coerce")
     df = df.sort_values("snapshot_date")
@@ -123,26 +207,18 @@ def _calculate_fallback_metrics(df: pd.DataFrame) -> pd.DataFrame:
     df = df.copy()
     df = _ensure_numeric_metrics(df)
 
-    df["total_engagement"] = (
-        df["likes"] + df["comments"] + df["saves"] + df["shares"]
-    )
+    df["total_engagement"] = df["likes"] + df["comments"] + df["saves"] + df["shares"]
 
     df["engagement_rate"] = (
         df["total_engagement"] / df["views"].replace(0, pd.NA) * 100
     ).fillna(0)
 
-    df["save_rate"] = (
-        df["saves"] / df["views"].replace(0, pd.NA) * 100
-    ).fillna(0)
+    df["save_rate"] = (df["saves"] / df["views"].replace(0, pd.NA) * 100).fillna(0)
 
-    df["share_rate"] = (
-        df["shares"] / df["views"].replace(0, pd.NA) * 100
-    ).fillna(0)
+    df["share_rate"] = (df["shares"] / df["views"].replace(0, pd.NA) * 100).fillna(0)
 
     df["performance_score"] = (
-        df["engagement_rate"] * 0.70
-        + df["save_rate"] * 0.20
-        + df["share_rate"] * 0.10
+        df["engagement_rate"] * 0.70 + df["save_rate"] * 0.20 + df["share_rate"] * 0.10
     )
 
     return df
@@ -212,7 +288,9 @@ def prepare_pattern_dataset(
     merged_df = _ensure_numeric_metrics(merged_df)
     merged_df = _apply_metrics(merged_df)
 
-    growth_columns = [column for column in merged_df.columns if column.endswith("_growth")]
+    growth_columns = [
+        column for column in merged_df.columns if column.endswith("_growth")
+    ]
     for column in growth_columns:
         merged_df[column] = pd.to_numeric(merged_df[column], errors="coerce").fillna(0)
 
@@ -246,10 +324,7 @@ def get_pattern_summary(
         return pd.DataFrame()
 
     df[group_by_column] = (
-        df[group_by_column]
-        .fillna("Unknown")
-        .astype(str)
-        .replace("", "Unknown")
+        df[group_by_column].fillna("Unknown").astype(str).replace("", "Unknown")
     )
 
     summary_df = (
@@ -323,6 +398,7 @@ def get_all_pattern_summaries(
 
     return summaries
 
+
 def _get_confidence_level(cover_count: int) -> str:
     """
     Pattern sonucunun kaç cover üzerinden geldiğine göre güven seviyesi üretir.
@@ -335,6 +411,8 @@ def _get_confidence_level(cover_count: int) -> str:
         return "Medium"
 
     return "Low"
+
+
 def _get_confidence_weight(cover_count: int) -> float:
     """
     Cover sayısına göre ağırlık verir.
@@ -370,46 +448,52 @@ def _get_decision_label(confidence_level: str, weighted_score: float) -> str:
     return "Weak Pattern"
 
 
-def _get_recommendation_text(decision_label: str) -> str:
+def _get_recommendation_text(
+    decision_label: str,
+    language: str = "en",
+) -> str:
     """
-    Karar etiketine göre aksiyon önerisi üretir.
+    Karar etiketine göre yerelleştirilmiş aksiyon önerisi üretir.
     """
-
-    if decision_label == "Strong Pattern":
-        return "Prioritize this pattern in future cover planning."
-
-    if decision_label == "Promising Pattern":
-        return "Test this pattern with a few more covers."
-
-    if decision_label == "Needs More Data":
-        return "Do not make a strong decision yet; collect more data first."
-
-    return "This pattern is not strong enough to prioritize right now."
-
-
-def generate_pattern_insights(pattern_summaries: dict[str, pd.DataFrame]) -> list[str]:
-    """
-    Weighted pattern summary tablolarından okunabilir insight cümleleri üretir.
-
-    V2.3 güncellemesi:
-    - avg_performance_score yerine weighted_pattern_score kullanır.
-    - decision_label bilgisini yorumlara ekler.
-    - confidence seviyesine göre aksiyon önerisi üretir.
-    """
-
-    insights = []
-
-    dimension_names = {
-        "genre": "genre",
-        "artist": "artist",
-        "content_type": "content type",
+    translation_keys = {
+        "Strong Pattern": ("pattern.dynamic.recommendation.strong"),
+        "Promising Pattern": ("pattern.dynamic.recommendation.promising"),
+        "Needs More Data": ("pattern.dynamic.recommendation.needs_more_data"),
+        "Weak Pattern": ("pattern.dynamic.recommendation.weak"),
     }
+
+    translation_key = translation_keys.get(
+        decision_label,
+        "pattern.dynamic.recommendation.weak",
+    )
+
+    return t(
+        translation_key,
+        language,
+    )
+
+
+def generate_pattern_insights(
+    pattern_summaries: dict[str, pd.DataFrame],
+    language: str = "en",
+) -> list[str]:
+    """
+    Weighted pattern summary tablolarından seçilen dilde
+    okunabilir insight cümleleri üretir.
+
+    İç karar etiketleri İngilizce kalır. Yalnızca kullanıcıya
+    gösterilen metinler yerelleştirilir.
+    """
+    insights = []
 
     for dimension, summary_df in pattern_summaries.items():
         if summary_df.empty:
             continue
 
-        readable_dimension = dimension_names.get(dimension, dimension)
+        readable_dimension = _get_readable_dimension(
+            dimension,
+            language,
+        )
 
         best_row = summary_df.iloc[0]
 
@@ -417,17 +501,42 @@ def generate_pattern_insights(pattern_summaries: dict[str, pd.DataFrame]) -> lis
         avg_score = best_row["avg_performance_score"]
         weighted_score = best_row["weighted_pattern_score"]
         cover_count = int(best_row["cover_count"])
-        confidence = best_row["confidence_level"]
-        decision_label = best_row["decision_label"]
-        recommendation = _get_recommendation_text(decision_label)
 
-        insights.append(
-            f"Best weighted {readable_dimension}: {best_name}. "
-            f"Weighted pattern score is {weighted_score}, while raw average score is {avg_score}. "
-            f"This result is based on {cover_count} cover(s), confidence is {confidence.lower()}, "
-            f"and the decision label is '{decision_label}'. "
-            f"{recommendation}"
+        confidence = str(best_row["confidence_level"])
+        decision_label = str(best_row["decision_label"])
+
+        localized_confidence = _translate_mapped_value(
+            confidence,
+            CONFIDENCE_TRANSLATION_KEYS,
+            language,
         )
+
+        localized_decision_label = _translate_mapped_value(
+            decision_label,
+            DECISION_LABEL_TRANSLATION_KEYS,
+            language,
+        )
+
+        recommendation = _get_recommendation_text(
+            decision_label,
+            language,
+        )
+
+        main_insight = t(
+            "pattern.dynamic.insight.best",
+            language,
+        ).format(
+            dimension=readable_dimension,
+            name=best_name,
+            weighted_score=weighted_score,
+            avg_score=avg_score,
+            cover_count=cover_count,
+            confidence=localized_confidence,
+            decision_label=localized_decision_label,
+            recommendation=recommendation,
+        )
+
+        insights.append(main_insight)
 
         if len(summary_df) > 1:
             second_row = summary_df.iloc[1]
@@ -435,12 +544,22 @@ def generate_pattern_insights(pattern_summaries: dict[str, pd.DataFrame]) -> lis
             second_name = second_row[dimension]
             second_weighted_score = second_row["weighted_pattern_score"]
 
-            weighted_gap = round(weighted_score - second_weighted_score, 2)
-
-            insights.append(
-                f"{best_name} is ahead of {second_name} by {weighted_gap} weighted score points "
-                f"in the {readable_dimension} analysis."
+            weighted_gap = round(
+                weighted_score - second_weighted_score,
+                2,
             )
+
+            gap_insight = t(
+                "pattern.dynamic.insight.gap",
+                language,
+            ).format(
+                best_name=best_name,
+                second_name=second_name,
+                weighted_gap=weighted_gap,
+                dimension=readable_dimension,
+            )
+
+            insights.append(gap_insight)
 
         needs_more_data_rows = summary_df[
             summary_df["decision_label"] == "Needs More Data"
@@ -451,101 +570,153 @@ def generate_pattern_insights(pattern_summaries: dict[str, pd.DataFrame]) -> lis
                 needs_more_data_rows[dimension].astype(str).head(3).tolist()
             )
 
-            insights.append(
-                f"Some {readable_dimension} patterns look interesting but still need more data: "
-                f"{needs_more_data_names}."
+            needs_data_insight = t(
+                "pattern.dynamic.insight.needs_more_data",
+                language,
+            ).format(
+                dimension=readable_dimension,
+                names=needs_more_data_names,
             )
 
+            insights.append(needs_data_insight)
+
     if not insights:
-        insights.append("Not enough pattern data is available yet.")
+        insights.append(
+            t(
+                "pattern.dynamic.insight.not_enough",
+                language,
+            )
+        )
 
     return insights
 
-def _get_recommendation_priority(decision_label: str) -> str:
+
+def _get_recommendation_priority(
+    decision_label: str,
+    language: str = "en",
+) -> str:
     """
-    Karar etiketine göre planlama önceliği verir.
+    Karar etiketine göre yerelleştirilmiş planlama
+    önceliği döndürür.
     """
+    translation_keys = {
+        "Strong Pattern": ("pattern.dynamic.priority.high"),
+        "Promising Pattern": ("pattern.dynamic.priority.medium"),
+        "Needs More Data": ("pattern.dynamic.priority.data_needed"),
+        "Weak Pattern": ("pattern.dynamic.priority.low"),
+    }
 
-    if decision_label == "Strong Pattern":
-        return "High Priority"
+    translation_key = translation_keys.get(
+        decision_label,
+        "pattern.dynamic.priority.low",
+    )
 
-    if decision_label == "Promising Pattern":
-        return "Medium Priority"
-
-    if decision_label == "Needs More Data":
-        return "Data Needed"
-
-    return "Low Priority"
+    return t(
+        translation_key,
+        language,
+    )
 
 
-def _get_planning_action(readable_dimension: str, decision_label: str) -> str:
+def _get_planning_action(
+    readable_dimension: str,
+    decision_label: str,
+    language: str = "en",
+) -> str:
     """
-    Karar etiketine göre cover planlama aksiyonu üretir.
+    Karar etiketine göre seçilen dilde cover planlama
+    aksiyonu üretir.
     """
+    translation_keys = {
+        "Strong Pattern": ("pattern.dynamic.planning_action.strong"),
+        "Promising Pattern": ("pattern.dynamic.planning_action.promising"),
+        "Needs More Data": ("pattern.dynamic.planning_action.needs_more_data"),
+        "Weak Pattern": ("pattern.dynamic.planning_action.weak"),
+    }
 
-    if decision_label == "Strong Pattern":
-        return f"Plan more covers using this {readable_dimension}."
+    translation_key = translation_keys.get(
+        decision_label,
+        "pattern.dynamic.planning_action.weak",
+    )
 
-    if decision_label == "Promising Pattern":
-        return f"Test this {readable_dimension} with 2-3 more covers."
-
-    if decision_label == "Needs More Data":
-        return f"Collect more data before making a strong decision about this {readable_dimension}."
-
-    return f"Do not prioritize this {readable_dimension} right now."
+    return t(
+        translation_key,
+        language,
+    ).format(
+        dimension=readable_dimension,
+    )
 
 
 def generate_pattern_recommendations(
     pattern_summaries: dict[str, pd.DataFrame],
+    language: str = "en",
 ) -> pd.DataFrame:
     """
-    Pattern summary sonuçlarından cover planlama önerileri üretir.
+    Pattern summary sonuçlarından seçilen dilde
+    cover planlama önerileri üretir.
 
-    V2.4:
-    - dimension
-    - pattern
-    - priority
-    - decision_label
-    - action
-    - reason
+    DataFrame kolon adları teknik tutarlılık için
+    İngilizce kalır. Kullanıcıya gösterilen değerler
+    yerelleştirilir.
     """
-
     records = []
 
-    dimension_names = {
-        "genre": "genre",
-        "artist": "artist",
-        "content_type": "content type",
-    }
-
-    priority_rank = {
-        "High Priority": 4,
-        "Medium Priority": 3,
-        "Data Needed": 2,
-        "Low Priority": 1,
+    priority_rank_by_decision = {
+        "Strong Pattern": 4,
+        "Promising Pattern": 3,
+        "Needs More Data": 2,
+        "Weak Pattern": 1,
     }
 
     for dimension, summary_df in pattern_summaries.items():
         if summary_df.empty:
             continue
 
-        readable_dimension = dimension_names.get(dimension, dimension)
+        readable_dimension = _get_readable_dimension(
+            dimension,
+            language,
+        )
 
         for _, row in summary_df.iterrows():
             pattern_name = row[dimension]
             cover_count = int(row["cover_count"])
             avg_score = row["avg_performance_score"]
             weighted_score = row["weighted_pattern_score"]
-            confidence = row["confidence_level"]
-            decision_label = row["decision_label"]
 
-            priority = _get_recommendation_priority(decision_label)
-            action = _get_planning_action(readable_dimension, decision_label)
+            confidence = str(row["confidence_level"])
+            decision_label = str(row["decision_label"])
 
-            reason = (
-                f"{pattern_name} has a raw average score of {avg_score}, "
-                f"a weighted score of {weighted_score}, "
-                f"{cover_count} cover(s), and {confidence.lower()} confidence."
+            localized_confidence = _translate_mapped_value(
+                confidence,
+                CONFIDENCE_TRANSLATION_KEYS,
+                language,
+            )
+
+            localized_decision_label = _translate_mapped_value(
+                decision_label,
+                DECISION_LABEL_TRANSLATION_KEYS,
+                language,
+            )
+
+            priority = _get_recommendation_priority(
+                decision_label,
+                language,
+            )
+
+            action = _get_planning_action(
+                readable_dimension,
+                decision_label,
+                language,
+            )
+
+            reason = t(
+                "pattern.dynamic.recommendation.reason",
+                language,
+            ).format(
+                pattern=pattern_name,
+                avg_score=avg_score,
+                weighted_score=weighted_score,
+                cover_count=cover_count,
+                confidence=localized_confidence,
             )
 
             records.append(
@@ -553,12 +724,17 @@ def generate_pattern_recommendations(
                     "dimension": readable_dimension,
                     "pattern": pattern_name,
                     "priority": priority,
-                    "decision_label": decision_label,
+                    "decision_label": (localized_decision_label),
                     "cover_count": cover_count,
-                    "weighted_pattern_score": weighted_score,
+                    "weighted_pattern_score": (weighted_score),
                     "action": action,
                     "reason": reason,
-                    "_priority_rank": priority_rank.get(priority, 0),
+                    "_priority_rank": (
+                        priority_rank_by_decision.get(
+                            decision_label,
+                            0,
+                        )
+                    ),
                 }
             )
 
@@ -568,13 +744,23 @@ def generate_pattern_recommendations(
     recommendations_df = pd.DataFrame(records)
 
     recommendations_df = recommendations_df.sort_values(
-        by=["_priority_rank", "weighted_pattern_score", "cover_count"],
-        ascending=[False, False, False],
+        by=[
+            "_priority_rank",
+            "weighted_pattern_score",
+            "cover_count",
+        ],
+        ascending=[
+            False,
+            False,
+            False,
+        ],
     )
 
     recommendations_df = recommendations_df.drop(columns=["_priority_rank"])
 
     return recommendations_df
+
+
 def _get_decision_multiplier(decision_label: str) -> float:
     """
     Candidate scoring için karar etiketini sayısal etkiye çevirir.
@@ -672,7 +858,11 @@ def score_cover_candidate(
 
         summary_df = pattern_summaries.get(dimension)
 
-        if summary_df is None or summary_df.empty or dimension not in summary_df.columns:
+        if (
+            summary_df is None
+            or summary_df.empty
+            or dimension not in summary_df.columns
+        ):
             records.append(
                 {
                     "dimension": readable_dimension,
@@ -715,9 +905,7 @@ def score_cover_candidate(
         decision_multiplier = _get_decision_multiplier(decision_label)
 
         candidate_contribution = (
-            weighted_pattern_score
-            * dimension_weight
-            * decision_multiplier
+            weighted_pattern_score * dimension_weight * decision_multiplier
         )
 
         if decision_label == "Needs More Data":
@@ -753,26 +941,54 @@ def score_cover_candidate(
 
     return details_df, summary
 
+
 def generate_candidate_explanations(
     candidate_details_df: pd.DataFrame,
     candidate_summary: dict,
+    language: str = "en",
 ) -> list[str]:
     """
-    Candidate test sonucundan okunabilir açıklamalar üretir.
+    Candidate test sonucundan seçilen dilde
+    okunabilir açıklamalar üretir.
     """
-
     explanations = []
 
     if candidate_details_df.empty:
-        return ["No candidate details are available."]
+        return [
+            t(
+                "pattern.dynamic.candidate.empty",
+                language,
+            )
+        ]
 
-    candidate_label = candidate_summary.get("candidate_label", "Unknown")
-    candidate_score = candidate_summary.get("candidate_score", 0)
-    needs_more_data_count = candidate_summary.get("needs_more_data_count", 0)
-
-    explanations.append(
-        f"This candidate is classified as '{candidate_label}' with a score of {candidate_score}."
+    candidate_label = candidate_summary.get(
+        "candidate_label",
+        "Unknown",
     )
+    candidate_score = candidate_summary.get(
+        "candidate_score",
+        0,
+    )
+    needs_more_data_count = candidate_summary.get(
+        "needs_more_data_count",
+        0,
+    )
+
+    localized_candidate_label = _translate_mapped_value(
+        candidate_label,
+        CANDIDATE_LABEL_TRANSLATION_KEYS,
+        language,
+    )
+
+    classification_message = t(
+        "pattern.dynamic.candidate.classification",
+        language,
+    ).format(
+        candidate_label=localized_candidate_label,
+        candidate_score=candidate_score,
+    )
+
+    explanations.append(classification_message)
 
     strong_rows = candidate_details_df[
         candidate_details_df["decision_label"] == "Strong Pattern"
@@ -786,17 +1002,18 @@ def generate_candidate_explanations(
         candidate_details_df["decision_label"] == "Needs More Data"
     ]
 
-    not_found_rows = candidate_details_df[
-        candidate_details_df["status"] == "Not Found"
-    ]
+    not_found_rows = candidate_details_df[candidate_details_df["status"] == "Not Found"]
 
     if not strong_rows.empty:
-        strong_parts = ", ".join(
-            strong_rows["selected_pattern"].astype(str).tolist()
-        )
+        strong_parts = ", ".join(strong_rows["selected_pattern"].astype(str).tolist())
 
         explanations.append(
-            f"The strongest support for this candidate comes from: {strong_parts}."
+            t(
+                "pattern.dynamic.candidate.strong_support",
+                language,
+            ).format(
+                patterns=strong_parts,
+            )
         )
 
     if not promising_rows.empty:
@@ -805,7 +1022,12 @@ def generate_candidate_explanations(
         )
 
         explanations.append(
-            f"These parts look promising but still need more validation: {promising_parts}."
+            t(
+                "pattern.dynamic.candidate.promising_support",
+                language,
+            ).format(
+                patterns=promising_parts,
+            )
         )
 
     if not needs_data_rows.empty:
@@ -814,7 +1036,12 @@ def generate_candidate_explanations(
         )
 
         explanations.append(
-            f"These parts need more data before making a strong decision: {needs_data_parts}."
+            t(
+                "pattern.dynamic.candidate.needs_data",
+                language,
+            ).format(
+                patterns=needs_data_parts,
+            )
         )
 
     if not not_found_rows.empty:
@@ -823,37 +1050,42 @@ def generate_candidate_explanations(
         )
 
         explanations.append(
-            f"These selected patterns were not found in the current dataset: {not_found_parts}."
+            t(
+                "pattern.dynamic.candidate.not_found",
+                language,
+            ).format(
+                patterns=not_found_parts,
+            )
         )
 
     if needs_more_data_count >= 2:
         explanations.append(
-            "This idea should be tested carefully because multiple parts of the candidate have low data confidence."
+            t(
+                "pattern.dynamic.candidate." "multiple_low_confidence",
+                language,
+            )
         )
 
-    if candidate_label == "Strong Candidate":
-        explanations.append(
-            "This cover idea can be prioritized in the near-term cover plan."
-        )
+    final_message_keys = {
+        "Strong Candidate": ("pattern.dynamic.candidate.final.strong"),
+        "Promising Candidate": ("pattern.dynamic.candidate.final.promising"),
+        "Interesting but Needs More Data": (
+            "pattern.dynamic.candidate.final." "needs_more_data"
+        ),
+        "Experimental Candidate": ("pattern.dynamic.candidate.final.experimental"),
+        "Weak Candidate": ("pattern.dynamic.candidate.final.weak"),
+    }
 
-    elif candidate_label == "Promising Candidate":
-        explanations.append(
-            "This cover idea can be added to the near-term testing list."
-        )
+    final_message_key = final_message_keys.get(
+        candidate_label,
+        "pattern.dynamic.candidate.final.weak",
+    )
 
-    elif candidate_label == "Interesting but Needs More Data":
-        explanations.append(
-            "This idea is not a guaranteed priority yet, but it is worth testing carefully because at least one part of the candidate has strong support."
+    explanations.append(
+        t(
+            final_message_key,
+            language,
         )
-
-    elif candidate_label == "Experimental Candidate":
-        explanations.append(
-            "This cover idea is better suited for experimentation rather than priority planning."
-        )
-
-    else:
-        explanations.append(
-            "This cover idea should not be prioritized until stronger data appears."
-        )
+    )
 
     return explanations

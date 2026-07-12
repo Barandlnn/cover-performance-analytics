@@ -5,11 +5,13 @@ from src.analyzer import (
     get_growth_summary,
     get_cover_snapshot_history,
 )
+from src.i18n import t
 
 
 def render_growth_section(
     covers_df: pd.DataFrame,
     snapshots_df: pd.DataFrame,
+    language: str,
 ) -> None:
     """
     V1.6 Growth Analytics ekranını render eder.
@@ -22,40 +24,71 @@ def render_growth_section(
     Hesaplama tarafı src/analyzer.py içinde kalır.
     Bu dosya sadece Streamlit UI tarafını yönetir.
     """
-
     st.markdown("---")
-    st.header("📈 Growth Analytics")
-    st.caption("Cover'ların zaman içindeki performans gelişimini analiz eder.")
+    st.header(
+        t(
+            "growth.title",
+            language,
+        )
+    )
+    st.caption(
+        t(
+            "growth.caption",
+            language,
+        )
+    )
 
     try:
-        growth_summary = get_growth_summary(covers_df, snapshots_df)
+        growth_summary = get_growth_summary(
+            covers_df,
+            snapshots_df,
+        )
 
         if growth_summary.empty:
             st.info(
-                "Growth analizi için henüz yeterli snapshot verisi yok. "
-                "Bir cover için en az 2 snapshot gerekli."
+                t(
+                    "growth.insufficient_data",
+                    language,
+                )
             )
             return
 
-        render_growth_summary(growth_summary)
-        render_selected_cover_snapshot_history(covers_df, snapshots_df)
+        render_growth_summary(
+            growth_summary,
+            language=language,
+        )
+
+        render_selected_cover_snapshot_history(
+            covers_df,
+            snapshots_df,
+            language=language,
+        )
 
     except FileNotFoundError:
         st.warning(
-            "metrics_snapshots.csv dosyası bulunamadı. "
-            "Önce en az bir metric snapshot eklemelisin."
+            t(
+                "growth.missing_snapshots_file",
+                language,
+            )
         )
 
     except Exception as error:
-        st.error(f"Growth Analytics yüklenirken bir hata oluştu: {error}")
+        st.error(f"{t('growth.load_error', language)}: {error}")
 
 
-def render_growth_summary(growth_summary: pd.DataFrame) -> None:
+def render_growth_summary(
+    growth_summary: pd.DataFrame,
+    language: str,
+) -> None:
     """
     Growth summary KPI kartlarını ve tabloyu gösterir.
     """
-
-    st.subheader("🚀 Growth Summary")
+    st.subheader(
+        t(
+            "growth.summary.title",
+            language,
+        )
+    )
 
     best_views_growth = growth_summary.sort_values(
         by="views_growth",
@@ -75,19 +108,28 @@ def render_growth_summary(growth_summary: pd.DataFrame) -> None:
     growth_col1, growth_col2, growth_col3 = st.columns(3)
 
     growth_col1.metric(
-        "Best Views Growth",
+        t(
+            "growth.summary.best_views",
+            language,
+        ),
         best_views_growth["title"],
         int(best_views_growth["views_growth"]),
     )
 
     growth_col2.metric(
-        "Best Likes Growth",
+        t(
+            "growth.summary.best_likes",
+            language,
+        ),
         best_likes_growth["title"],
         int(best_likes_growth["likes_growth"]),
     )
 
     growth_col3.metric(
-        "Best Engagement Growth",
+        t(
+            "growth.summary.best_engagement",
+            language,
+        ),
         best_engagement_growth["title"],
         int(best_engagement_growth["total_engagement_growth"]),
     )
@@ -121,27 +163,46 @@ def render_growth_summary(growth_summary: pd.DataFrame) -> None:
             width="stretch",
         )
     else:
-        st.dataframe(growth_summary, width="stretch")
+        st.dataframe(
+            growth_summary,
+            width="stretch",
+        )
 
-    with st.expander("Debug: Growth Summary Columns"):
+    with st.expander(
+        t(
+            "growth.summary.debug_columns",
+            language,
+        )
+    ):
         st.write(list(growth_summary.columns))
 
 
 def render_selected_cover_snapshot_history(
     covers_df: pd.DataFrame,
     snapshots_df: pd.DataFrame,
+    language: str,
 ) -> None:
     """
-    Kullanıcının seçtiği cover için snapshot geçmişini ve trend grafiklerini gösterir.
+    Kullanıcının seçtiği cover için snapshot geçmişini
+    ve trend grafiklerini gösterir.
     """
-
     st.markdown("---")
-    st.subheader("📊 Selected Cover Snapshot History")
+    st.subheader(
+        t(
+            "growth.history.title",
+            language,
+        )
+    )
 
     growth_cover_options_df = covers_df.copy()
 
     if growth_cover_options_df.empty:
-        st.info("Snapshot geçmişi göstermek için önce en az bir cover eklemelisin.")
+        st.info(
+            t(
+                "growth.history.no_covers",
+                language,
+            )
+        )
         return
 
     growth_cover_options_df["display_name"] = (
@@ -153,7 +214,10 @@ def render_selected_cover_snapshot_history(
     )
 
     selected_growth_cover_display = st.selectbox(
-        "Select a cover to inspect snapshot history",
+        t(
+            "growth.history.selector",
+            language,
+        ),
         growth_cover_options_df["display_name"].tolist(),
         key="growth_cover_selector",
     )
@@ -166,7 +230,12 @@ def render_selected_cover_snapshot_history(
     )
 
     if cover_history.empty:
-        st.info("Bu cover için henüz snapshot geçmişi bulunamadı.")
+        st.info(
+            t(
+                "growth.history.no_history",
+                language,
+            )
+        )
         return
 
     preferred_history_columns = [
@@ -182,28 +251,40 @@ def render_selected_cover_snapshot_history(
     ]
 
     available_history_columns = [
-        column for column in preferred_history_columns if column in cover_history.columns
+        column
+        for column in preferred_history_columns
+        if column in cover_history.columns
     ]
 
     st.dataframe(
         cover_history[available_history_columns],
         hide_index=True,
-       width="stretch",
+        width="stretch",
     )
 
     chart_history = cover_history.copy()
+
     chart_history["snapshot_date"] = pd.to_datetime(
         chart_history["snapshot_date"],
         errors="coerce",
     )
+
     chart_history = chart_history.dropna(subset=["snapshot_date"])
+
     chart_history = chart_history.set_index("snapshot_date")
 
     if chart_history.empty:
         return
 
-    st.subheader("📈 Views Trend")
-    st.line_chart(chart_history[["views"]])
+    st.subheader(
+        t(
+            "growth.history.views_trend",
+            language,
+        )
+    )
+
+    if "views" in chart_history.columns:
+        st.line_chart(chart_history[["views"]])
 
     engagement_columns = [
         column
@@ -218,5 +299,11 @@ def render_selected_cover_snapshot_history(
     ]
 
     if engagement_columns:
-        st.subheader("❤️ Engagement Trend")
+        st.subheader(
+            t(
+                "growth.history.engagement_trend",
+                language,
+            )
+        )
+
         st.line_chart(chart_history[engagement_columns])

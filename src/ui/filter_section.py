@@ -1,8 +1,13 @@
 import pandas as pd
 import streamlit as st
 
+from src.i18n import t
 
-def get_filter_options(df: pd.DataFrame, column_name: str) -> list:
+
+def get_filter_options(
+    df: pd.DataFrame,
+    column_name: str,
+) -> list:
     """
     Return sidebar filter options for the given DataFrame column.
 
@@ -12,15 +17,22 @@ def get_filter_options(df: pd.DataFrame, column_name: str) -> list:
     if column_name not in df.columns:
         return ["All"]
 
-    options = (
-        df[column_name]
-        .dropna()
-        .astype(str)
-        .unique()
-        .tolist()
-    )
+    options = df[column_name].dropna().astype(str).unique().tolist()
 
     return ["All"] + sorted(options)
+
+
+def format_filter_option(
+    option: str,
+    language: str,
+) -> str:
+    """
+    Return the localized display text for a sidebar filter option.
+    """
+    if option == "All":
+        return t("filters.all_option", language)
+
+    return option
 
 
 def apply_sidebar_filters(
@@ -42,22 +54,41 @@ def apply_sidebar_filters(
     return filtered_df
 
 
-def render_sidebar_filters(df: pd.DataFrame) -> pd.DataFrame:
+def render_sidebar_filters(
+    df: pd.DataFrame,
+    language: str,
+) -> pd.DataFrame:
     """
     Render sidebar filter widgets and return the filtered DataFrame.
     """
-    st.sidebar.header("Filters")
+    st.sidebar.header(t("filters.header", language))
 
-    platform_options = get_filter_options(df, "platform")
-    selected_platform = st.sidebar.selectbox(
-        "Platform Filter",
-        platform_options,
+    platform_options = get_filter_options(
+        df,
+        "platform",
     )
 
-    genre_options = get_filter_options(df, "genre")
+    selected_platform = st.sidebar.selectbox(
+        t("filters.platform_label", language),
+        platform_options,
+        format_func=lambda option: format_filter_option(
+            option,
+            language,
+        ),
+    )
+
+    genre_options = get_filter_options(
+        df,
+        "genre",
+    )
+
     selected_genre = st.sidebar.selectbox(
-        "Genre Filter",
+        t("filters.genre_label", language),
         genre_options,
+        format_func=lambda option: format_filter_option(
+            option,
+            language,
+        ),
     )
 
     filtered_df = apply_sidebar_filters(
@@ -69,10 +100,13 @@ def render_sidebar_filters(df: pd.DataFrame) -> pd.DataFrame:
     return filtered_df
 
 
-def stop_if_filtered_data_empty(filtered_df: pd.DataFrame):
+def stop_if_filtered_data_empty(
+    filtered_df: pd.DataFrame,
+    language: str,
+) -> None:
     """
     Stop the Streamlit app when the selected filters return no data.
     """
     if filtered_df.empty:
-        st.warning("No covers found for the selected filters.")
+        st.warning(t("filters.empty_warning", language))
         st.stop()
