@@ -141,6 +141,22 @@ Saved candidate tests are analyzed through:
 - Genre-based candidate performance
 - Candidate score charts
 
+### Report Export
+
+The currently filtered dashboard data can be exported without modifying the source data files.
+
+Available export formats:
+
+- UTF-8 CSV containing filtered dashboard rows and calculated metrics
+- Localized Turkish or English text performance summary
+
+The text summary includes:
+
+- Overall performance metrics
+- Best-performing cover
+- Dynamic performance insights
+- Report generation date and time
+
 ## Technology Stack
 
 - Python
@@ -298,24 +314,29 @@ Streamlit will display the local application URL in the terminal.
 
 ## Current Project Status
 
-The project is currently in the **V3 Productization** phase.
+**V3 Productization is complete.**
 
 Completed areas include:
 
-- Modular UI refactor
-- Centralized data access
-- Dashboard and analytics separation
+- Modular dashboard and UI architecture
+- Centralized CSV data access
 - Turkish and English language support
-- Candidate analytics architecture
+- Dynamic bilingual analytics insights
+- Candidate test and candidate history analytics
+- Project documentation
+- Filter-aware CSV report export
+- Localized text performance report export
+- Final repository and application quality checks
 
 ## Roadmap
 
-### V3 — Productization
+### V3 — Productization — Completed
 
 - Dashboard and UI refactor
+- Centralized data access
 - Turkish and English language support
 - Project documentation
-- Report export
+- CSV and localized text report export
 - Final productization checks
 
 ### V4 — Data Infrastructure
