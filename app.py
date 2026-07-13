@@ -1,5 +1,7 @@
 import streamlit as st
 
+from src.ui.report_export_section import render_report_export_section
+
 from src.data_manager import (
     load_current_cover_data,
     load_covers_raw,
@@ -115,6 +117,15 @@ stop_if_filtered_data_empty(
 # -----------------------------
 
 render_main_dashboard_section(
+    filtered_df,
+    language=language,
+)
+
+# -----------------------------
+# REPORT EXPORT
+# -----------------------------
+
+render_report_export_section(
     filtered_df,
     language=language,
 )

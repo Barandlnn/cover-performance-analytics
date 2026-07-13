@@ -437,6 +437,44 @@ TRANSLATIONS = {
             "This idea looks interesting, but you should test it "
             "carefully and collect more data."
         ),
+        "report_export.report_title": ("Cover Performance Analytics Report"),
+        "report_export.generated_at": ("Generated at: {generated_at}"),
+        "report_export.no_data": (
+            "No filtered cover data is available for this report."
+        ),
+        "report_export.summary_title": "Performance Summary",
+        "report_export.total_covers": ("Total covers: {total_covers}"),
+        "report_export.average_engagement": (
+            "Average engagement rate: {average_engagement:.2f}%"
+        ),
+        "report_export.average_save_rate": (
+            "Average save rate: {average_save_rate:.2f}%"
+        ),
+        "report_export.best_score": ("Best performance score: {best_score:.2f}"),
+        "report_export.best_cover_title": ("Best Performing Cover"),
+        "report_export.cover_title": "Title: {title}",
+        "report_export.artist": "Artist: {artist}",
+        "report_export.genre": "Genre: {genre}",
+        "report_export.cover_score": ("Performance score: {performance_score}"),
+        "report_export.insights_title": ("Performance Insights"),
+        "report_export.no_insights": ("No performance insights could be generated."),
+        "report_export.section_title": "Export Reports",
+        "report_export.section_description": (
+            "Download the currently filtered dashboard data or a "
+            "localized performance summary."
+        ),
+        "report_export.no_export_data": (
+            "There is no filtered data available to export."
+        ),
+        "report_export.download_csv": ("Download Filtered Data as CSV"),
+        "report_export.download_csv_help": (
+            "Exports all currently filtered dashboard rows and metrics."
+        ),
+        "report_export.download_summary": ("Download Performance Summary"),
+        "report_export.download_summary_help": (
+            "Exports a localized text report containing summary metrics, "
+            "the best-performing cover, and performance insights."
+        ),
     },
     "tr": {
         "app.title": "Cover Performans Analitiği",
@@ -860,14 +898,55 @@ TRANSLATIONS = {
         "candidate_history.columns.test_count": "Test Sayısı",
         "candidate_history.columns.average_score": "Ortalama Skor",
         "candidate_history.columns.best_score": "En İyi Skor",
+        "candidate_history.values.candidate_label."
+        "interesting_but_needs_more_data": (
+            "İlgi Çekici, Ancak Daha Fazla Veri Gerekiyor"
+        ),
+        "candidate_history.values.action."
+        "test_carefully_collect_more_data": (
+            "Bu fikir ilgi çekici görünüyor; ancak dikkatli şekilde "
+            "test etmeli ve daha fazla veri toplamalısın."
+        ),
+        "report_export.report_title": ("Cover Performance Analytics Raporu"),
+        "report_export.generated_at": ("Oluşturulma zamanı: {generated_at}"),
+        "report_export.no_data": (
+            "Bu rapor için filtrelenmiş cover verisi bulunmuyor."
+        ),
+        "report_export.summary_title": "Performans Özeti",
+        "report_export.total_covers": ("Toplam cover sayısı: {total_covers}"),
+        "report_export.average_engagement": (
+            "Ortalama etkileşim oranı: %{average_engagement:.2f}"
+        ),
+        "report_export.average_save_rate": (
+            "Ortalama kaydetme oranı: %{average_save_rate:.2f}"
+        ),
+        "report_export.best_score": ("En iyi performans skoru: {best_score:.2f}"),
+        "report_export.best_cover_title": ("En İyi Performans Gösteren Cover"),
+        "report_export.cover_title": "Şarkı: {title}",
+        "report_export.artist": "Sanatçı: {artist}",
+        "report_export.genre": "Tür: {genre}",
+        "report_export.cover_score": ("Performans skoru: {performance_score}"),
+        "report_export.insights_title": ("Performans Yorumları"),
+        "report_export.no_insights": ("Performans yorumu oluşturulamadı."),
+        "report_export.section_title": "Raporları Dışa Aktar",
+        "report_export.section_description": (
+            "Mevcut filtrelenmiş dashboard verisini veya seçilen dildeki "
+            "performans özetini indirebilirsin."
+        ),
+        "report_export.no_export_data": (
+            "Dışa aktarılabilecek filtrelenmiş veri bulunmuyor."
+        ),
+        "report_export.download_csv": ("Filtrelenmiş Veriyi CSV Olarak İndir"),
+        "report_export.download_csv_help": (
+            "Mevcut filtrelere uyan tüm dashboard satırlarını ve "
+            "metriklerini dışa aktarır."
+        ),
+        "report_export.download_summary": ("Performans Özetini İndir"),
+        "report_export.download_summary_help": (
+            "Özet metrikleri, en iyi performans gösteren cover'ı ve "
+            "performans yorumlarını içeren bir metin raporu oluşturur."
+        ),
     },
-    "candidate_history.values.candidate_label."
-    "interesting_but_needs_more_data": ("İlgi Çekici, Ancak Daha Fazla Veri Gerekiyor"),
-    "candidate_history.values.action."
-    "test_carefully_collect_more_data": (
-        "Bu fikir ilgi çekici görünüyor; ancak dikkatli şekilde "
-        "test etmeli ve daha fazla veri toplamalısın."
-    ),
 }
 
 
