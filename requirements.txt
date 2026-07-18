@@ -1,2 +1,3 @@
 pandas
 streamlit
+openai==2.46.0
