@@ -437,6 +437,84 @@ TRANSLATIONS = {
             "This idea looks interesting, but you should test it "
             "carefully and collect more data."
         ),
+        "ai_creator_coach.title": "AI Creator Coach",
+        "ai_creator_coach.caption": (
+            "Generate a grounded, structured coaching report from the "
+            "currently filtered analytics data."
+        ),
+        "ai_creator_coach.analyzed_cover_count": (
+            "Analyzed covers in the current scope: {cover_count}"
+        ),
+        "ai_creator_coach.generate_report": "Generate AI Coach Report",
+        "ai_creator_coach.regenerate_report": "Regenerate AI Coach Report",
+        "ai_creator_coach.generating_report": "Generating AI coach report...",
+        "ai_creator_coach.missing_api_key": (
+            "The OpenAI API key is not configured. Report generation is disabled."
+        ),
+        "ai_creator_coach.insufficient_data": (
+            "The current filtered data is insufficient for a grounded AI report."
+        ),
+        "ai_creator_coach.empty_data": (
+            "No filtered cover data is available for the AI report."
+        ),
+        "ai_creator_coach.stale_report": (
+            "The previous report does not match the current data, language, "
+            "or model. Generate a new report."
+        ),
+        "ai_creator_coach.report_generated": (
+            "The AI Creator Coach report was generated successfully."
+        ),
+        "ai_creator_coach.executive_summary": "Executive Summary",
+        "ai_creator_coach.strengths": "Strengths",
+        "ai_creator_coach.risks": "Risks",
+        "ai_creator_coach.recommended_actions": "Recommended Actions",
+        "ai_creator_coach.next_cover_strategy": "Next Cover Strategy",
+        "ai_creator_coach.data_limitations": "Data Limitations",
+        "ai_creator_coach.local_limitations": "Local Data Quality Notes",
+        "ai_creator_coach.evidence": "Evidence",
+        "ai_creator_coach.interpretation": "Interpretation",
+        "ai_creator_coach.mitigation": "Mitigation",
+        "ai_creator_coach.rationale": "Rationale",
+        "ai_creator_coach.priority": "Priority",
+        "ai_creator_coach.recommendation": "Recommendation",
+        "ai_creator_coach.reasoning": "Reasoning",
+        "ai_creator_coach.confidence": "Confidence",
+        "ai_creator_coach.level.high": "High",
+        "ai_creator_coach.level.medium": "Medium",
+        "ai_creator_coach.level.low": "Low",
+        "ai_creator_coach.error.configuration": (
+            "The AI report configuration is invalid."
+        ),
+        "ai_creator_coach.error.invalid_response": (
+            "The AI service returned an invalid report. Please try again."
+        ),
+        "ai_creator_coach.error.api_request": (
+            "The AI report request failed. Please try again later."
+        ),
+        "ai_creator_coach.error.unexpected": (
+            "An unexpected error occurred. Reference: ai_creator_coach_unexpected_error."
+        ),
+        "ai_creator_coach.limitation.empty_dataset": (
+            "The current scope contains no covers."
+        ),
+        "ai_creator_coach.limitation.insufficient_cover_count": (
+            "Fewer than three covers are available in the current scope."
+        ),
+        "ai_creator_coach.limitation.missing_performance_score": (
+            "Performance score evidence is unavailable."
+        ),
+        "ai_creator_coach.limitation.missing_analysis_metrics": (
+            "Important analysis metrics are unavailable."
+        ),
+        "ai_creator_coach.limitation.limited_group_comparison": (
+            "There are too few comparable groups for a strong comparison."
+        ),
+        "ai_creator_coach.limitation.low_view_rate_outlier": (
+            "At least one leading result has rate metrics based on a low view count."
+        ),
+        "ai_creator_coach.limitation.unknown": (
+            "An additional local data limitation applies."
+        ),
         "report_export.report_title": ("Cover Performance Analytics Report"),
         "report_export.generated_at": ("Generated at: {generated_at}"),
         "report_export.no_data": (
@@ -906,6 +984,88 @@ TRANSLATIONS = {
         "test_carefully_collect_more_data": (
             "Bu fikir ilgi çekici görünüyor; ancak dikkatli şekilde "
             "test etmeli ve daha fazla veri toplamalısın."
+        ),
+        "ai_creator_coach.title": "Yapay Zekâ İçerik Üretici Koçu",
+        "ai_creator_coach.caption": (
+            "Mevcut filtrelenmiş analiz verilerinden, veriye dayalı ve "
+            "yapılandırılmış bir koçluk raporu oluştur."
+        ),
+        "ai_creator_coach.analyzed_cover_count": (
+            "Mevcut kapsamda analiz edilen cover sayısı: {cover_count}"
+        ),
+        "ai_creator_coach.generate_report": "Yapay Zekâ Koç Raporu Oluştur",
+        "ai_creator_coach.regenerate_report": (
+            "Yapay Zekâ Koç Raporunu Yeniden Oluştur"
+        ),
+        "ai_creator_coach.generating_report": (
+            "Yapay zekâ koç raporu oluşturuluyor..."
+        ),
+        "ai_creator_coach.missing_api_key": (
+            "OpenAI API anahtarı yapılandırılmamış. Rapor oluşturma devre dışı."
+        ),
+        "ai_creator_coach.insufficient_data": (
+            "Mevcut filtrelenmiş veri, güvenilir bir yapay zekâ raporu için yetersiz."
+        ),
+        "ai_creator_coach.empty_data": (
+            "Yapay zekâ raporu için filtrelenmiş cover verisi bulunmuyor."
+        ),
+        "ai_creator_coach.stale_report": (
+            "Önceki rapor mevcut veri, dil veya model ile eşleşmiyor. "
+            "Yeni bir rapor oluşturun."
+        ),
+        "ai_creator_coach.report_generated": (
+            "Yapay Zekâ İçerik Üretici Koçu raporu başarıyla oluşturuldu."
+        ),
+        "ai_creator_coach.executive_summary": "Yönetici Özeti",
+        "ai_creator_coach.strengths": "Güçlü Yönler",
+        "ai_creator_coach.risks": "Riskler",
+        "ai_creator_coach.recommended_actions": "Önerilen Aksiyonlar",
+        "ai_creator_coach.next_cover_strategy": "Sonraki Cover Stratejisi",
+        "ai_creator_coach.data_limitations": "Veri Sınırlamaları",
+        "ai_creator_coach.local_limitations": "Yerel Veri Kalitesi Notları",
+        "ai_creator_coach.evidence": "Kanıt",
+        "ai_creator_coach.interpretation": "Yorum",
+        "ai_creator_coach.mitigation": "Risk Azaltma",
+        "ai_creator_coach.rationale": "Gerekçe",
+        "ai_creator_coach.priority": "Öncelik",
+        "ai_creator_coach.recommendation": "Öneri",
+        "ai_creator_coach.reasoning": "Gerekçe ve Değerlendirme",
+        "ai_creator_coach.confidence": "Güven Düzeyi",
+        "ai_creator_coach.level.high": "Yüksek",
+        "ai_creator_coach.level.medium": "Orta",
+        "ai_creator_coach.level.low": "Düşük",
+        "ai_creator_coach.error.configuration": (
+            "Yapay zekâ raporu yapılandırması geçersiz."
+        ),
+        "ai_creator_coach.error.invalid_response": (
+            "Yapay zekâ servisi geçersiz bir rapor döndürdü. Lütfen yeniden deneyin."
+        ),
+        "ai_creator_coach.error.api_request": (
+            "Yapay zekâ raporu isteği başarısız oldu. Lütfen daha sonra yeniden deneyin."
+        ),
+        "ai_creator_coach.error.unexpected": (
+            "Beklenmeyen bir hata oluştu. Referans: ai_creator_coach_unexpected_error."
+        ),
+        "ai_creator_coach.limitation.empty_dataset": (
+            "Mevcut kapsamda cover bulunmuyor."
+        ),
+        "ai_creator_coach.limitation.insufficient_cover_count": (
+            "Mevcut kapsamda üçten az cover bulunuyor."
+        ),
+        "ai_creator_coach.limitation.missing_performance_score": (
+            "Performans skoru kanıtı kullanılamıyor."
+        ),
+        "ai_creator_coach.limitation.missing_analysis_metrics": (
+            "Önemli analiz metrikleri kullanılamıyor."
+        ),
+        "ai_creator_coach.limitation.limited_group_comparison": (
+            "Güçlü bir karşılaştırma için yeterli sayıda benzer grup bulunmuyor."
+        ),
+        "ai_creator_coach.limitation.low_view_rate_outlier": (
+            "En iyi sonuçlardan en az birinin oran metrikleri düşük görüntülenme sayısına dayanıyor."
+        ),
+        "ai_creator_coach.limitation.unknown": (
+            "Ek bir yerel veri sınırlaması bulunuyor."
         ),
         "report_export.report_title": ("Cover Performance Analytics Raporu"),
         "report_export.generated_at": ("Oluşturulma zamanı: {generated_at}"),

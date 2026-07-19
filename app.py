@@ -27,6 +27,7 @@ from src.ui.candidate_history_section import render_candidate_history_section
 from src.ui.pattern_section import render_pattern_section
 from src.ui.growth_section import render_growth_section
 from src.ui.main_dashboard_section import render_main_dashboard_section
+from src.ui.ai_creator_coach_section import render_ai_creator_coach_section
 from src.ui.sidebar_section import render_sidebar_forms
 
 st.set_page_config(
@@ -117,6 +118,15 @@ stop_if_filtered_data_empty(
 # -----------------------------
 
 render_main_dashboard_section(
+    filtered_df,
+    language=language,
+)
+
+# -----------------------------
+# AI CREATOR COACH
+# -----------------------------
+
+render_ai_creator_coach_section(
     filtered_df,
     language=language,
 )
