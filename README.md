@@ -4,7 +4,7 @@ A bilingual Streamlit application that turns cover-song performance data into de
 
 ## Quick Links
 
-- Demo Video: Coming soon
+- Demo Video: [Watch the Build Week demo](https://youtu.be/w11qfeLsLbY)
 - Devpost Submission: Coming soon
 - Build Week branch: `feature/build-week-ai`
 - [Installation](#installation)
@@ -106,12 +106,12 @@ The deterministic context contains compact portfolio totals and averages, median
 
 #### Key technical files
 
-| File | Responsibility |
-| --- | --- |
-| `src/ai_context_builder.py` | Builds a pure, deterministic, JSON-compatible analytics context and flags low-view evidence. |
-| `src/ai_report_contract.py` | Defines the strict report JSON Schema and validates model output locally. |
-| `src/ai_creator_service.py` | Creates the bounded GPT-5.6 Sol Responses API request and maps configuration, request, and response failures to safe errors. |
-| `src/ui/ai_creator_coach_section.py` | Handles explicit generation, bilingual rendering, session caching, stale-report detection, and safe user feedback. |
+| File                                 | Responsibility                                                                                                               |
+| ------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------- |
+| `src/ai_context_builder.py`          | Builds a pure, deterministic, JSON-compatible analytics context and flags low-view evidence.                                 |
+| `src/ai_report_contract.py`          | Defines the strict report JSON Schema and validates model output locally.                                                    |
+| `src/ai_creator_service.py`          | Creates the bounded GPT-5.6 Sol Responses API request and maps configuration, request, and response failures to safe errors. |
+| `src/ui/ai_creator_coach_section.py` | Handles explicit generation, bilingual rendering, session caching, stale-report detection, and safe user feedback.           |
 
 #### Project structure
 
